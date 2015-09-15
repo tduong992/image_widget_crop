@@ -1,0 +1,20 @@
+drupal.image_widget_crop.admin:
+  version: VERSION
+  js:
+    js/imgareaselect/scripts/jquery.imgareaselect.min.js: {}
+  css:
+    theme:
+      js/imgareaselect/css/imgareaselect-default.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once
+
+drupal.image_widget_crop.upload.admin:
+  version: VERSION
+  js:
+    js/image_widget_crop.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once

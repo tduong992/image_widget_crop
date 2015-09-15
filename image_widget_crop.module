@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @file
+ * Contains image_widget_crop.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\file\Plugin\Field\FieldType\FileFieldItemList;
+use Drupal\image_widget_crop\ImageWidgetCrop;
+
+/**
+ * Implements hook_help().
+ */
+function image_widget_crop_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.image_widget_crop':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provide a fonctionality to implement CROP API into the fields image.');
+      $output .= '<p>' . t('Provide a new FieldType ("Image Crop") to provide an new FieldWidget implement Crop Api UX.');
+      $output .= '<p>' . t('Provide a new FieldWidget ("ImageWidget crop") implement Crop Api UX into edit / add form entities.');
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_field_formatter_info_alter().
+ */
+function image_widget_crop_field_formatter_info_alter(array &$info) {
+  $info['image']['field_types'][] = 'image_field_crop';
+}
+
+/**
+ * Implements hook_field_widget_info_alter().
+ */
+function image_widget_crop_field_widget_info_alter(array &$info) {
+  // Let a new field type re-use an existing widget.
+  $info['image_image']['field_types'][] = 'image_widget_crop';
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $entity) {
+  if (isset($entity) && method_exists($entity, 'getFields')) {
+    foreach ($entity->getFields() as $entity_fields) {
+      if ($entity_fields instanceof FileFieldItemList && isset($entity_fields->crop_preview_wrapper)) {
+        // Get the route params attributes.
+        $route_params = \Drupal::requestStack()
+          ->getCurrentRequest()->attributes->get('_route_params');
+
+        /** @var \Drupal\image_widget_crop\ImageWidgetCrop $crop */
+        $crop = new ImageWidgetCrop();
+
+        // Verify if the current form is an edit.
+        if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {
+          $edit = TRUE;
+        }
+
+        // Parse the value of a crop_preview_wrapper element and get,
+        // the properties associate with her image style.
+        foreach ($entity_fields->crop_preview_wrapper as $image_style_name => $properties) {
+          // Save the entity if it has not already been saved by some other code.
+          if (isset($properties) && !empty($properties['crop-w']) && !empty($properties['crop-h'])) {
+            $crop->cropByImageStyle($properties, $entity_fields->getValue()['0'], $image_style_name, $edit, $crop);
+          }
+        }
+      }
+    }
+  }
+}
