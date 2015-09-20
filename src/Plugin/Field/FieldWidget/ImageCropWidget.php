@@ -31,8 +31,6 @@ class ImageCropWidget extends ImageWidget {
    */
   public static function defaultSettings() {
     return array(
-      'progress_indicator' => 'throbber',
-      'preview_image_style' => 'thumbnail',
       'crop_preview_image_style' => 'crop_thumbnail',
       'crop_list' => '',
     ) + parent::defaultSettings();
@@ -183,10 +181,9 @@ class ImageCropWidget extends ImageWidget {
             // process is active.
             foreach ($crop_elements as $crop_elements_name => $crop_elements_value) {
               $element['crop_preview_wrapper'][$image_style->getName()][$crop_elements_name] = [
-                '#type' => 'textfield',
-                '#title' => $crop_elements_value['label'],
+                '#type' => 'hidden',
                 '#attributes' => ['class' => ["crop-$crop_elements_name"]],
-                '#default_value' => !empty($edit) ? $crop_elements_value['value'] : NULL,
+                '#value' => !empty($edit) ? $crop_elements_value['value'] : 0,
               ];
             }
 

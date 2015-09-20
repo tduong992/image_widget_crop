@@ -18,17 +18,9 @@ function image_widget_crop_help($route_name, RouteMatchInterface $route_match) {
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Provide a fonctionality to implement CROP API into the fields image.');
-      $output .= '<p>' . t('Provide a new FieldType ("Image Crop") to provide an new FieldWidget implement Crop Api UX.');
       $output .= '<p>' . t('Provide a new FieldWidget ("ImageWidget crop") implement Crop Api UX into edit / add form entities.');
       return $output;
   }
-}
-
-/**
- * Implements hook_field_formatter_info_alter().
- */
-function image_widget_crop_field_formatter_info_alter(array &$info) {
-  $info['image']['field_types'][] = 'image_field_crop';
 }
 
 /**
