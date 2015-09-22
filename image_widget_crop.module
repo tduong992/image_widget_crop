@@ -240,7 +240,7 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
         foreach ($entity_fields->crop_preview_wrapper['container'] as $image_style_name => $properties) {
           // Save the entity if it has not already been saved by some other code.
           if (isset($properties['values']) && !empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h'])) {
-            $crop->cropByImageStyle($properties['values'], $entity_fields->getValue()['0'], $image_style_name, $edit, $crop);
+            $crop->cropByImageStyle($properties['values'], $entity_fields->getValue()['0'], $image_style_name, $edit);
           }
         }
       }

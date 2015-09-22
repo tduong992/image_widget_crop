@@ -315,7 +315,7 @@ class ImageCropWidget extends ImageWidget {
       '#type' => 'select',
       '#options' => image_style_options(FALSE),
       '#empty_option' => '<' . t('no preview') . '>',
-      '#default_value' => $this->getSetting('preview_image_style'),
+      '#default_value' => $this->getSetting('crop_preview_image_style'),
       '#description' => t('The preview image will be shown while editing the content.'),
       '#weight' => 15,
     );

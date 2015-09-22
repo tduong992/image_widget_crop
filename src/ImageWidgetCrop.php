@@ -182,20 +182,23 @@ class ImageWidgetCrop {
    * @param ImageWidgetCrop $image_crop
    *   Instance of ImageWidgetCrop.
    */
-  public function cropByImageStyle(array $properties, $field_value, $image_style_name, $edit, ImageWidgetCrop $image_crop) {
+  public function cropByImageStyle(array $properties, $field_value, $image_style_name, $edit) {
 
-    $crop_properties = $image_crop->getCropOriginalDimension($field_value['height'], $properties);
+    $crop_properties = $this->getCropOriginalDimension($field_value['height'], $properties);
+
+    // Load the style image corresponding to the crop previously.
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
+    $image_style = \Drupal::entityManager()
+      ->getStorage('image_style')
+      ->load($image_style_name);
+
+    // Get crop type for current ImageStyle.
+    $crop_type = $this->getCropType($image_style);
 
     if (isset($edit)) {
-      // Load the style image corresponding to the crop previously.
-      /** @var \Drupal\image\Entity\ImageStyle $image_style */
-      $image_style = \Drupal::entityManager()
-        ->getStorage('image_style')
-        ->load($image_style_name);
-
       $crop = \Drupal::service('entity.manager')
         ->getStorage('crop')->loadByProperties([
-          'type' => $image_crop->getCropType($image_style),
+          'type' => $crop_type,
           'uri' => $field_value['file-uri'],
           'image_style' => $image_style_name
         ]);
@@ -207,7 +210,8 @@ class ImageWidgetCrop {
           $crop_size = $crop_entity->size();
           $old_crop = array_merge($crop_position, $crop_size);
           // Verify if the crop (dimensions / positions) have changed.
-          if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {return;
+          if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+            return;
           }
           else {
             // Parse all properties if this crop have changed.
@@ -223,11 +227,11 @@ class ImageWidgetCrop {
         }
       }
       else {
-        $this->saveCrop($crop_properties, $field_value, $image_style_name, $image_crop);
+        $this->saveCrop($crop_properties, $field_value, $image_style, $crop_type);
       }
     }
     else {
-      $this->saveCrop($crop_properties, $field_value, $image_style_name, $image_crop);
+      $this->saveCrop($crop_properties, $field_value, $image_style, $crop_type);
     }
   }
 
@@ -238,20 +242,13 @@ class ImageWidgetCrop {
    *   The properties of the crop applied to the original image (dimensions).
    * @param array|mixed $field_value
    *   An array of values for the contained properties of image_crop widget.
-   * @param string $image_style_name
+   * @param \Drupal\image\Entity\ImageStyle $image_style
    *   The machine name of ImageStyle.
-   * @param ImageWidgetCrop $image_crop
-   *   Instance of ImageWidgetCrop.
+   * @param string $crop_type
+   *   The name of Crop type.
    */
-  public function saveCrop(array $crop_properties, $field_value, $image_style_name, ImageWidgetCrop $image_crop) {
-
-    // Load the style image corresponding to the crop previously.
-    /** @var \Drupal\image\Entity\ImageStyle $image_style */
-    $image_style = \Drupal::entityManager()
-      ->getStorage('image_style')
-      ->load($image_style_name);
-
-    if ($crop_type = $image_crop->getCropType($image_style)) {
+  public function saveCrop(array $crop_properties, $field_value, ImageStyle $image_style, $crop_type) {
+    if ($crop_type) {
       $values = [
         'type' => $crop_type,
         'entity_id' => $field_value['file-id'],
@@ -261,7 +258,7 @@ class ImageWidgetCrop {
         'y' => $crop_properties['y'],
         'width' => $crop_properties['width'],
         'height' => $crop_properties['height'],
-        'image_style' => $image_style_name,
+        'image_style' => $image_style->getName(),
       ];
 
       // Save crop with previous values.
