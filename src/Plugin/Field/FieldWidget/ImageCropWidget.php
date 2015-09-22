@@ -89,9 +89,28 @@ class ImageCropWidget extends ImageWidget {
 
       $element['crop_preview_wrapper'] = [
         '#type' => 'container',
-        '#prefix' => '<ul>',
-        '#suffix' => '</ul>',
-        '#attributes' => ['class' => ['preview-wrapper-crop']],
+        '#attributes' => [
+          'class' => ['crop-wrapper'],
+        ],
+        '#weight' => 100,
+      ];
+
+      // List ImageStyle container.
+      $element['crop_preview_wrapper']['list'] = [
+        '#type' => 'crop_sidebar',
+        '#attributes' => [
+          'class' => ['ratio-list'],
+        ],
+        '#element_type' => 'ul',
+        '#weight' => -10,
+      ];
+
+      // Wrap crop elements.
+      $element['crop_preview_wrapper']['container'] = [
+        '#type' => 'crop_container',
+        '#attributes' => [
+          'class' => ['preview-wrapper-crop'],
+        ],
         '#weight' => 100,
       ];
 
@@ -101,34 +120,46 @@ class ImageCropWidget extends ImageWidget {
       if ($image_styles) {
         /** @var \Drupal\image\Entity\ImageStyle $image_style */
         foreach ($image_styles as $image_style) {
-          if (in_array($image_style->getName(), $element['#crop_list'])) {
-
-            // Get the ratio of image by ImageStyle.
+          $machine_name = $image_style->getName();
+          $label = $image_style->label();
+          if (in_array($machine_name, $element['#crop_list'])) {
             $ratio = $ImageWidgetCrop->getSizeRatio($image_style);
 
+            $element['crop_preview_wrapper']['list'][$machine_name] = [
+              '#type' => 'crop_list_items',
+              '#attributes' => [
+                'class' => ['crop-preview-wrapper', 'item'],
+                'data-ratio' => [$ratio],
+                'data-name' => [$machine_name],
+              ],
+              '#variables' => [
+                'anchor' => "#$machine_name",
+                'ratio' => $ratio,
+                'label' => $label
+              ]
+            ];
+
             // Generation of html List with image & crop informations.
-            // @todo Create new elements for styling the crop container & lists.
-            $element['crop_preview_wrapper'][$image_style->getName()] = [
-              '#type' => 'container',
-              '#prefix' => "<li data-ratio=$ratio>",
-              '#suffix' => '</li>',
-              '#attributes' => ['class' => ['crop-preview-wrapper-list']],
+            $element['crop_preview_wrapper']['container'][$machine_name] = [
+              '#type' => 'crop_image_container',
+              '#attributes' => [
+                'class' => ['crop-preview-wrapper-list'],
+                'id' => [$machine_name],
+                'data-ratio' => [$ratio],
+              ],
+              '#variables' => ['label' => $label, 'ratio' => $ratio],
               '#weight' => -10,
             ];
 
-            $element['crop_preview_wrapper'][$image_style->getName()]['title'] = [
-              '#prefix' => '<p>',
-              '#suffix' => '</p>',
-              '#markup' => t('@style_label - ( <b>real ratio</b> @ratio )', [
-                '@style_label' => $image_style->label(),
-                '@ratio' => $ratio
-              ]),
-            ];
-
-            $element['crop_preview_wrapper'][$image_style->getName()]['image'] = [
+            $element['crop_preview_wrapper']['container'][$machine_name]['image'] = [
               '#theme' => 'image_style',
               '#style_name' => $element['#crop_preview_image_style'],
+              '#attributes' => [
+                'data-ratio' => [$ratio],
+                'data-name' => [$machine_name],
+              ],
               '#uri' => $variables['uri'],
+              '#weight' => -10,
             ];
 
             // GET CROP LIBRARIE VALUES.
@@ -148,7 +179,7 @@ class ImageCropWidget extends ImageWidget {
                 ->getStorage('crop')->loadByProperties([
                   'type' => $ImageWidgetCrop->getCropType($image_style),
                   'uri' => $variables['uri'],
-                  'image_style' => $image_style->getName()
+                  'image_style' => $machine_name
                 ]);
 
               // Only if the crop already exist pre-populate,
@@ -161,6 +192,10 @@ class ImageCropWidget extends ImageWidget {
                     'size' => $crop_entity->size()
                   ];
                 }
+
+                // Add "saved" class if the crop already exist (in list & img container element).
+                $element['crop_preview_wrapper']['list'][$machine_name]['#attributes']['class'][] = 'saved';
+                $element['crop_preview_wrapper']['container'][$machine_name]['#attributes']['class'][] = 'saved';
 
                 // If the current crop have a position & sizes,
                 // calculate properties to apply crop selection into preview.
@@ -177,10 +212,19 @@ class ImageCropWidget extends ImageWidget {
               }
             }
 
+            // Generation of html List with image & crop informations.
+            $element['crop_preview_wrapper']['container'][$machine_name]['values'] = [
+              '#type' => 'container',
+              '#attributes' => [
+                'class' => ['crop-preview-wrapper-value'],
+              ],
+              '#weight' => -9,
+            ];
+
             // Generate all cordinates elements into the form when,
             // process is active.
             foreach ($crop_elements as $crop_elements_name => $crop_elements_value) {
-              $element['crop_preview_wrapper'][$image_style->getName()][$crop_elements_name] = [
+              $element['crop_preview_wrapper']['container'][$machine_name]['values'][$crop_elements_name] = [
                 '#type' => 'hidden',
                 '#attributes' => ['class' => ["crop-$crop_elements_name"]],
                 '#value' => !empty($edit) ? $crop_elements_value['value'] : 0,

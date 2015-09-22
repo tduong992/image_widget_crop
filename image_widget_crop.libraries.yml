@@ -14,6 +14,9 @@ drupal.image_widget_crop.upload.admin:
   version: VERSION
   js:
     js/image_widget_crop.js: {}
+  css:
+    theme:
+      css/image_widget_crop.css: {}
   dependencies:
     - core/jquery
     - core/drupal

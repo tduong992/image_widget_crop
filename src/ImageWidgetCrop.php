@@ -26,7 +26,7 @@ class ImageWidgetCrop {
     $properties = $this->getImageStyleSizes($image_style);
     if (isset($properties) && (!empty($properties['width']) || !empty($properties['height']))) {
       $gcd_object = gmp_gcd($properties['width'], $properties['height']);
-      $gcd = gmp_strval($gcd_object);
+      $gcd = gmp_intval($gcd_object);
 
       if (!empty($gcd) && $gcd != '1') {
         return round($properties['width'] / $gcd) . ':' . round($properties['height'] / $gcd);
