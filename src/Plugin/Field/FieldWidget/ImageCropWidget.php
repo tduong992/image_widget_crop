@@ -44,8 +44,6 @@ class ImageCropWidget extends ImageWidget {
    * This method is assigned as a #process callback in formElement() method.
    */
   public static function process($element, FormStateInterface $form_state, $form) {
-    $item = $element['#value'];
-    $item['fids'] = $element['fids']['#value'];
     $edit = FALSE;
     $route_params = \Drupal::requestStack()
       ->getCurrentRequest()->attributes->get('_route_params');
@@ -68,8 +66,8 @@ class ImageCropWidget extends ImageWidget {
         'file_id' => $file->id(),
       );
 
-      /** @var \Drupal\image_widget_crop\ImageWidgetCrop $ImageWidgetCrop */
-      $ImageWidgetCrop = new ImageWidgetCrop();
+      /** @var \Drupal\image_widget_crop\ImageWidgetCrop $image_widgetcrop */
+      $image_widgetcrop = new ImageWidgetCrop();
 
       // Determine image dimensions.
       if (isset($element['#value']['width']) && isset($element['#value']['height'])) {
@@ -123,7 +121,7 @@ class ImageCropWidget extends ImageWidget {
           $machine_name = $image_style->getName();
           $label = $image_style->label();
           if (in_array($machine_name, $element['#crop_list'])) {
-            $ratio = $ImageWidgetCrop->getSizeRatio($image_style);
+            $ratio = $image_widgetcrop->getSizeRatio($image_style);
 
             $element['crop_preview_wrapper']['list'][$machine_name] = [
               '#type' => 'crop_list_items',
@@ -177,7 +175,7 @@ class ImageCropWidget extends ImageWidget {
             if ($edit) {
               $crop = \Drupal::service('entity.manager')
                 ->getStorage('crop')->loadByProperties([
-                  'type' => $ImageWidgetCrop->getCropType($image_style),
+                  'type' => $image_widgetcrop->getCropType($image_style),
                   'uri' => $variables['uri'],
                   'image_style' => $machine_name
                 ]);
@@ -186,14 +184,15 @@ class ImageCropWidget extends ImageWidget {
               // all cordinates values.
               if (!empty($crop)) {
                 /** @var \Drupal\crop\Entity\Crop $crop_entity */
-                foreach ($crop as $crop_id => $crop_entity) {
+                foreach ($crop as $crop_entity) {
                   $crop_properties = [
                     'anchor' => $crop_entity->position(),
                     'size' => $crop_entity->size()
                   ];
                 }
 
-                // Add "saved" class if the crop already exist (in list & img container element).
+                // Add "saved" class if the crop already exist,
+                // (in list & img container element).
                 $element['crop_preview_wrapper']['list'][$machine_name]['#attributes']['class'][] = 'saved';
                 $element['crop_preview_wrapper']['container'][$machine_name]['#attributes']['class'][] = 'saved';
 
@@ -285,7 +284,8 @@ class ImageCropWidget extends ImageWidget {
     // Get max Width of this imageStyle.
     $thumbnail_width = $effect[array_keys($effect)[0]]['data']['width'];
 
-    // Special case when the width of image is less than maximum width of thumbnail.
+    // Special case when the width of image is less,
+    // than maximum width of thumbnail.
     if ($thumbnail_width > $width) {
       $thumbnail_width = $width;
     }
@@ -297,7 +297,8 @@ class ImageCropWidget extends ImageWidget {
     // Get the delta between Original Height divide by Thumbnail Height.
     $delta = number_format($height / $thumbnail_height, 2, '.', '');
 
-    // Get the Crop selection Size (into Uploaded image) & calculate selection for Thumbnail.
+    // Get the Crop selection Size (into Uploaded image) &,
+    // calculate selection for Thumbnail.
     $crop_thumbnail_properties['crop-h'] = round($original_crop_properties['size']['height'] / $delta);
     $crop_thumbnail_properties['crop-w'] = round($original_crop_properties['size']['width'] / $delta);
 
@@ -378,9 +379,6 @@ class ImageCropWidget extends ImageWidget {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-
-    $field_settings = $this->getFieldSettings();
-
     // Add properties needed by process() method.
     $element['#crop_list'] = $this->getSetting('crop_list');
     $element['#crop_preview_image_style'] = $this->getSetting('crop_preview_image_style');
