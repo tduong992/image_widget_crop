@@ -279,17 +279,23 @@ class ImageCropWidget extends ImageWidget {
     // Verify the configuration of ImageStyle and get the data width.
     $effect = $image_styles[$preview]->getEffects()->getConfiguration();
 
-    // Get Width of this image.
+    // Get the real sizes of uploaded image.
+    list($width, $height) = getimagesize($uri);
+
+    // Get max Width of this imageStyle.
     $thumbnail_width = $effect[array_keys($effect)[0]]['data']['width'];
 
-    list($width, $height) = getimagesize($uri);
+    // Special case when the width of image is less than maximum width of thumbnail.
+    if ($thumbnail_width > $width) {
+      $thumbnail_width = $width;
+    }
 
     // Calculate Thumbnail height
     // (Original Height x Thumbnail Width / Original Width = Thumbnail Height).
     $thumbnail_height = round(($height * $thumbnail_width) / $width);
 
     // Get the delta between Original Height divide by Thumbnail Height.
-    $delta = $height / $thumbnail_height;
+    $delta = number_format($height / $thumbnail_height, 2, '.', '');
 
     // Get the Crop selection Size (into Uploaded image) & calculate selection for Thumbnail.
     $crop_thumbnail_properties['crop-h'] = round($original_crop_properties['size']['height'] / $delta);

@@ -288,7 +288,6 @@
 }
 
 .crop-wrapper .preview-wrapper-crop .crop-preview-wrapper-list .content-crop-img img {
-    max-width: 100%;
     height: auto;
 }
 
