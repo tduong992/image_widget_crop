@@ -1,6 +1,8 @@
 ImageWidgetCrop module
 ======================
 
+[![Build Status](https://travis-ci.org/woprrr/image_widget_crop.svg?branch=8.x-1.x)](https://travis-ci.org/woprrr/image_widget_crop)
+
 Provides an interface for using the features of the [Crop API]. Module is still 
 under heavy development.
 

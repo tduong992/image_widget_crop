@@ -1,13 +1,14 @@
 language: php
 
 php:
-  - 5.4
   - 5.5
+  - 5.6
+  - 7.0
 
 env:
   global:
     - MODULE_NAME='image_widget_crop'
-    - MODULE_DEPENDANCES='crop'
+    - MODULE_DEPENDENCIES='crop'
     - MODULE_TEST_GROUP='image_widget_crop'
     - DRUPAL_REPO='git://drupalcode.org/project/drupal.git'
     - DRUPAL_VERSION='8.0.x'
@@ -16,7 +17,12 @@ env:
 
 matrix:
   allow-failures:
-    - php: 5.5
+    - php: 7.0
+  fast-finish: true
+
+branches:
+  only:
+    - 8.x-1.x
 
 before_install:
   # Ensure we have the latest sources.
@@ -25,17 +31,17 @@ before_install:
   # Composer.
   - sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
   - source $HOME/.bashrc
-  # - composer self-update
+  - composer self-update
 
   # Drush.
-  - composer global require "youngj/httpserver:dev-master#41dd2b7"
-  - composer global require drush/drush:dev-master
+  - composer global require -n "youngj/httpserver:dev-master#41dd2b7"
+  - composer global require -n drush/drush:dev-master
 
   # Codesniffer.
-  - composer global require squizlabs/php_codesniffer:$PHPCS_VERSION
+  - composer global require -n squizlabs/php_codesniffer:$PHPCS_VERSION
 
   # Coder.
-  - composer global require drupal/coder:$CODER_VERSION
+  - composer global require -n drupal/coder:$CODER_VERSION
   - ln -s ~/.composer/vendor/drupal/coder/coder_sniffer/Drupal ~/.composer/vendor/squizlabs/php_codesniffer/CodeSniffer/Standards/
 
   # Ensure the PHP environment is ready.
@@ -56,13 +62,13 @@ install:
   - mv /tmp/$MODULE_NAME drupal/modules/
 
 before_script:
-  # This fixes a fail when install Drupal.
+  # This fixes a fail when installing Drupal.
   - echo 'sendmail_path = /bin/true' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
 
   # Install Drupal and enable the required modules (including this one).
   - mysql -e 'create database drupal;'
   - cd $TRAVIS_BUILD_DIR/drupal && drush --yes site-install testing --db-url="mysql://root@127.0.0.1/drupal"
-  - cd $TRAVIS_BUILD_DIR/drupal && drush dl $MODULE_DEPENDANCES && drush en $MODULE_DEPENDANCES -y
+  - cd $TRAVIS_BUILD_DIR/drupal && drush dl $MODULE_DEPENDENCIES && drush en $MODULE_DEPENDENCIES -y
   - cd $TRAVIS_BUILD_DIR/drupal && drush en $MODULE_NAME -y
   - cd $TRAVIS_BUILD_DIR/drupal && drush en simpletest -y
 
