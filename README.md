@@ -2,6 +2,7 @@ ImageWidgetCrop module
 ======================
 
 [![Build Status](https://travis-ci.org/woprrr/image_widget_crop.svg?branch=8.x-1.x)](https://travis-ci.org/woprrr/image_widget_crop)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/woprrr/image_widget_crop/badges/quality-score.png?b=8.x-1.x)](https://scrutinizer-ci.com/g/woprrr/image_widget_crop/?branch=8.x-1.x)
 
 Provides an interface for using the features of the [Crop API]. Module is still 
 under heavy development.
