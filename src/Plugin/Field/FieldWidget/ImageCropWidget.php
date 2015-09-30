@@ -7,10 +7,10 @@
 
 namespace Drupal\image_widget_crop\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
 use Drupal\image_widget_crop\ImageWidgetCrop;
-use Drupal\Core\Field\FieldItemListInterface;
 
 
 /**
@@ -30,10 +30,10 @@ class ImageCropWidget extends ImageWidget {
    * {@inheritdoc}
    */
   public static function defaultSettings() {
-    return array(
+    return [
       'crop_preview_image_style' => 'crop_thumbnail',
-      'crop_list' => '',
-    ) + parent::defaultSettings();
+      'crop_list' => NULL,
+    ] + parent::defaultSettings();
   }
 
   /**
@@ -60,11 +60,11 @@ class ImageCropWidget extends ImageWidget {
     // Add the image preview.
     if (!empty($element['#files']) && $element['#preview_image_style']) {
       $file = reset($element['#files']);
-      $variables = array(
+      $variables = [
         'style_name' => $element['#preview_image_style'],
         'uri' => $file->getFileUri(),
         'file_id' => $file->id(),
-      );
+      ];
 
       /** @var \Drupal\image_widget_crop\ImageWidgetCrop $image_widgetcrop */
       $image_widgetcrop = new ImageWidgetCrop();
@@ -323,23 +323,24 @@ class ImageCropWidget extends ImageWidget {
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $element = parent::settingsForm($form, $form_state);
 
-    $element['crop_preview_image_style'] = array(
+    $element['crop_preview_image_style'] = [
       '#title' => t('Crop preview image style'),
       '#type' => 'select',
       '#options' => image_style_options(FALSE),
-      '#empty_option' => '<' . t('no preview') . '>',
+      '#empty_option' => t('@no-preview', ['@no-preview' => '<' . t('no preview') . '>']),
       '#default_value' => $this->getSetting('crop_preview_image_style'),
       '#description' => t('The preview image will be shown while editing the content.'),
       '#weight' => 15,
-    );
+    ];
 
     $element['crop_list'] = [
       '#title' => t('Image style cropped'),
       '#type' => 'select',
       '#options' => image_style_options(FALSE),
-      '#empty_option' => '<' . t('no preview') . '>',
+      '#empty_option' => t('@no-preview', ['@no-preview' => '<' . t('no preview') . '>']),
       '#default_value' => $this->getSetting('crop_list'),
       '#multiple' => TRUE,
+      '#required' => TRUE,
       '#description' => t('The preview image will be cropped.'),
       '#weight' => 16,
     ];
@@ -361,12 +362,12 @@ class ImageCropWidget extends ImageWidget {
     $crop_list = $this->getSetting('crop_list');
 
     if (isset($crop_list) && !empty($crop_list)) {
-      $preview[] = t('Crop image style search: @list', array('@list' => implode(", ", $crop_list)));
+      $preview[] = t('Crop image style search: @list', ['@list' => implode(", ", $crop_list)]);
     }
 
     if (isset($image_styles[$image_style_setting]) || isset($image_styles[$crop_image_style_setting])) {
-      $preview[] = t('Preview image style: @style', array('@style' => $image_styles[$image_style_setting]));
-      $preview[] = t('Crop preview image style: @style', array('@style' => $image_styles[$crop_image_style_setting]));
+      $preview[] = t('Preview image style: @style', ['@style' => $image_styles[$image_style_setting]]);
+      $preview[] = t('Crop preview image style: @style', ['@style' => $image_styles[$crop_image_style_setting]]);
     }
     else {
       $preview = t('Original image');
