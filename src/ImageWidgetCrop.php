@@ -306,6 +306,8 @@ class ImageWidgetCrop {
         $gcd = $a;
       }
     }
+
+    return $gcd;
   }
 
 
