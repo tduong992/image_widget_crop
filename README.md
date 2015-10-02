@@ -47,9 +47,10 @@ Technical details
 
 #### MacOS X
 
+* Install gmp on your system `brew install gmp`
 * Run `php --version` to check which version of PHP you have.
-* Download the sources for that version
-* `phpize` & compile it
+* [Download](http://www.php.net/releases/) that version of PHP somewhere on your system.
+* Run `phpize`, then compile it with
 
         bash
         cd php-5.5.21/ext/gmp
@@ -58,6 +59,7 @@ Technical details
         make
         make install
 
+* Locate your php.ini file `php -i | grep "Loaded Configuration File"`
 * Add the following to your php.ini
 
         bash
