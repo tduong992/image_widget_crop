@@ -298,11 +298,11 @@ class ImageWidgetCrop {
    * Calculate the greatest common denominator of two numbers.
    *
    * @param int $a
-   *   First number to check
+   *   First number to check.
    * @param int $b
-   *   Second number to check
+   *   Second number to check.
    *
-   * @return int
+   * @return integer|null
    *  Greatest common denominator of $a and $b.
    */
   private static function calculateGCD($a, $b) {
@@ -311,7 +311,7 @@ class ImageWidgetCrop {
     }
     else {
       if ($b > $a) {
-        $gcd = static::calculateGCD($b, $a);
+        $gcd = self::calculateGCD($b, $a);
       }
       else {
         while ($b > 0) {
@@ -325,6 +325,5 @@ class ImageWidgetCrop {
 
     return $gcd;
   }
-
 
 }
