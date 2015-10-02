@@ -51,10 +51,6 @@ install:
   # Basic PHP packages.
   - sudo apt-get install -y --force-yes php5-cgi php5-mysql
 
-  # GMP Library
-  - sudo apt-get install libgmp-dev
-  - sudo apt-get install php5-gmp
-
   # Move the checked out module into the correct structure.
   - mkdir /tmp/$MODULE_NAME
   - mv * /tmp/$MODULE_NAME/
