@@ -96,6 +96,7 @@ function template_preprocess_crop_list_items(array &$variables) {
  *     Properties used: #id, #attributes, #children.
  */
 function template_preprocess_crop_container(array &$variables) {
+  $items = [];
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
@@ -140,6 +141,7 @@ function template_preprocess_crop_container(array &$variables) {
  *     Properties used: #id, #attributes, #children.
  */
 function template_preprocess_crop_sidebar(array &$variables) {
+  $items = [];
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
@@ -181,6 +183,7 @@ function template_preprocess_crop_sidebar(array &$variables) {
  *     Properties used: #id, #attributes, #children.
  */
 function template_preprocess_crop_image_container(array &$variables) {
+  $items = [];
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
@@ -233,36 +236,35 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
 
         // Parse the value of a crop_preview_wrapper element and get,
         // the properties associate with her image style.
-        foreach ($entity_fields->crop_preview_wrapper['container'] as $image_style_name => $properties) {
+        foreach ($entity_fields->crop_preview_wrapper['container'] as $crop_type_name => $properties) {
 
-          /** @var \Drupal\image\Entity\ImageStyle $image_style */
-          $image_style = \Drupal::entityManager()
-            ->getStorage('image_style')
-            ->loadByProperties(['name' => $image_style_name, 'status' => TRUE]);
+          /** @var \Drupal\crop\Entity\CropType $crop_type */
+          $crop_type = \Drupal::entityManager()
+            ->getStorage('crop_type')
+            ->loadByProperties(['id' => $crop_type_name]);
 
           // Dans le cas ou l'image style a ete desactiver ou supprimer,
           // on préviens pour changer la configuration de l'image style ou,
           // du formater display-form.
-          if (!isset($image_style[$image_style_name]) || empty($image_style[$image_style_name])) {
-            drupal_set_message(t("The image style ('@imageStyle') is not active or not defined. Please verify configuration of image style or ImageWidgetCrop formatter configuration", ['@imageStyle' => $image_style_name]), 'error');
+          if (!isset($crop_type[$crop_type_name]) || empty($crop_type[$crop_type_name])) {
+            drupal_set_message(t("The image style ('@imageStyle') is not active or not defined. Please verify configuration of image style or ImageWidgetCrop formatter configuration", ['@imageStyle' => $crop_type_name]), 'error');
             return;
           }
 
           // If this crop is availables to create an crop entity.
           if ($properties['delete-crop'] == '0' && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
             // Get crop type for current ImageStyle.
-            $crop_type = $crop->getCropType($image_style[$image_style_name]);
             if (!isset($crop_type) && empty($crop_type)) {
-              drupal_set_message(t("The type of crop does not exist, please check the configuration of the ImageStyle ('@imageStyle')", ['@imageStyle' => $image_style->getName()]), 'error');
+              drupal_set_message(t("The type of crop does not exist, please check the configuration of the ImageStyle ('@imageStyle')", ['@imageStyle' => $crop_type->id()]), 'error');
               return;
             }
 
-            $crop->cropByImageStyle($properties['values'], $entity_fields->getValue()['0'], $image_style[$image_style_name], $edit, $crop_type);
+            $crop->cropByImageStyle($properties['values'], $entity_fields->getValue()['0'], $crop_type[$crop_type_name], $edit);
           }
 
           // If you need to delete existing crop when you edit this entity.
           if ($edit && $properties['delete-crop'] == '1') {
-            $crop->deleteCrop($entity_fields->getValue()['0']['file-uri'], $image_style[$image_style_name]);
+            $crop->deleteCrop($entity_fields->getValue()['0']['file-uri'], $crop_type[$crop_type_name]);
           }
         }
       }
