@@ -10,6 +10,7 @@ namespace Drupal\image_widget_crop;
 use Drupal\crop\Entity\CropType;
 use Drupal\crop\Plugin\ImageEffect\CropEffect;
 use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\crop\Entity\Crop;
 
 /**
  * ImageWidgetCrop calculation class.
@@ -42,7 +43,7 @@ class ImageWidgetCrop {
   }
 
   /**
-   * Get original size of a thumbnail image.
+   * Create new crop entity with user properties.
    *
    * @param array $properties
    *   All properties returned by the crop plugin (js),
@@ -51,53 +52,103 @@ class ImageWidgetCrop {
    *   An array of values for the contained properties of image_crop widget.
    * @param CropType $crop_type
    *   The entity CropType.
-   * @param bool $edit
-   *   The action form.
    */
-  public function cropByImageStyle(array $properties, $field_value, CropType $crop_type, $edit) {
+  public function applyCrop(array $properties, $field_value, CropType $crop_type) {
     // Get Original sizes and position of crop zone.
     $crop_properties = $this->getCropOriginalDimension($field_value['height'], $properties);
     // Get all imagesStyle used this crop_type.
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
 
-    if (isset($edit)) {
+    $this->saveCrop($crop_properties, $field_value, $image_styles, $crop_type);
+  }
+
+  /**
+   * Update old crop with new properties choose in UI.
+   *
+   * @param array $properties
+   *   All properties returned by the crop plugin (js),
+   *   and the size of thumbnail image.
+   * @param array|mixed $field_value
+   *   An array of values for the contained properties of image_crop widget.
+   * @param CropType $crop_type
+   *   The entity CropType.
+   */
+  public function updateCrop(array $properties, $field_value, CropType $crop_type) {
+    // Get Original sizes and position of crop zone.
+    $crop_properties = $this->getCropOriginalDimension($field_value['height'], $properties);
+    // Get all imagesStyle used this crop_type.
+    $image_styles = $this->getImageStylesByCrop($crop_type->id());
+
+    foreach ($image_styles as $image_style) {
       $crop = $this->cropStorage->loadByProperties([
-          'type' => $crop_type->id(),
-          'uri' => $field_value['file-uri'],
-        ]);
-      if (!empty($crop)) {
-        /** @var \Drupal\crop\Entity\Crop $crop_entity */
-        foreach ($crop as $crop_id => $crop_entity) {
-          $crop_position = $crop_entity->position();
-          $crop_size = $crop_entity->size();
-          $old_crop = array_merge($crop_position, $crop_size);
-
-
-          // Verify if the crop (dimensions / positions) have changed.
-          if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
-            return;
-          }
-          else {
-            // Parse all properties if this crop have changed.
-            foreach ($crop_properties as $crop_coordinate => $value) {
-              // Edit the crop properties if he have changed.
-              $crop[$crop_id]->set($crop_coordinate, $value, TRUE)
-                ->save();
-            }
-
-            foreach ($image_styles as $image_style) {
-              // Flush the cache of this ImageStyle.
-              $image_style->flush($field_value['file-uri']);
-            }
-          }
-        }
-      }
-      else {
-        $this->saveCrop($crop_properties, $field_value, $image_styles, $crop_type);
-      }
+        'type' => $crop_type->id(),
+        'uri' => $field_value['file-uri'],
+        'image_style' => $image_style->id(),
+      ]);
     }
-    else {
+
+    if (empty($crop)) {
       $this->saveCrop($crop_properties, $field_value, $image_styles, $crop_type);
+      return;
+    }
+
+    /** @var \Drupal\crop\Entity\Crop $crop_entity */
+    foreach ($crop as $crop_id => $crop_entity) {
+      $crop_position = $crop_entity->position();
+      $crop_size = $crop_entity->size();
+      $old_crop = array_merge($crop_position, $crop_size);
+
+      // Verify if the crop (dimensions / positions) have changed.
+      if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+        return;
+      }
+
+      $this->updateCropProperties($crop_entity, $crop_properties);
+      $this->imageStylesOperations($image_styles, $field_value['file-uri']);
+      drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
+    }
+
+  }
+
+  /**
+   * Apply different operation on ImageStyles.
+   *
+   * @param array $image_styles
+   *   All ImageStyles used by this cropType.
+   * @param string $file_uri
+   *   Uri of image uploaded by user.
+   * @param bool $create_derivative
+   *   Boolean to create an derivative of the image uploaded.
+   */
+  public function imageStylesOperations(array $image_styles, $file_uri, $create_derivative = FALSE) {
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
+    foreach ($image_styles as $image_style) {
+      if ($create_derivative) {
+        // Generate the image derivate uri.
+        $destination_uri = $image_style->buildUri($file_uri);
+
+        // Create a derivative of the original image with a good uri.
+        $image_style->createDerivative($file_uri, $destination_uri);
+      }
+      // Flush the cache of this ImageStyle.
+      $image_style->flush($file_uri);
+    }
+  }
+
+  /**
+   * Update existant crop entity properties.
+   *
+   * @param \Drupal\crop\Entity\Crop $crop
+   *   The crop object loaded.
+   * @param array $crop_properties
+   *   The machine name of ImageStyle.
+   */
+  public function updateCropProperties(Crop $crop, array $crop_properties) {
+    // Parse all properties if this crop have changed.
+    foreach ($crop_properties as $crop_coordinate => $value) {
+      // Edit the crop properties if he have changed.
+      $crop->set($crop_coordinate, $value, TRUE)
+        ->save();
     }
   }
 
@@ -181,12 +232,13 @@ class ImageWidgetCrop {
    *   The id of the current crop_type entity.
    *
    * @return array
-   *   All imageStyle used this crop_type.
+   *   All imageStyle used by this crop_type.
    */
   public function getImageStylesByCrop($crop_type_name) {
     $styles = [];
     $image_styles = $this->imageStyleStorage->loadMultiple();
 
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
       /* @var  \Drupal\image\ImageEffectInterface $effect */
       foreach ($image_style->getEffects() as $uuid => $effect) {
@@ -211,11 +263,11 @@ class ImageWidgetCrop {
    * @param array|mixed $field_value
    *   An array of values for the contained properties of image_crop widget.
    * @param array $image_styles
-   *   The machine name of ImageStyle.
-   * @param string $crop_type
-   *   The name of Crop type.
+   *   The list of imagesStyle available for this crop.
+   * @param CropType $crop_type
+   *   The entity CropType.
    */
-  public function saveCrop(array $crop_properties, $field_value, array $image_styles, $crop_type) {
+  public function saveCrop(array $crop_properties, $field_value, array $image_styles, CropType $crop_type) {
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
       $values = [
@@ -234,16 +286,9 @@ class ImageWidgetCrop {
       /** @var \Drupal\crop\CropInterface $crop */
       $crop = $this->cropStorage->create($values);
       $crop->save();
-
-      // Generate the image derivate uri.
-      $destination_uri = $image_style->buildUri($field_value['file-uri']);
-
-      // Create a derivate of the original image with a good uri.
-      $image_style->createDerivative($field_value['file-uri'], $destination_uri);
-
-      // Flush the cache of this ImageStyle.
-      $image_style->flush($field_value['file-uri']);
     }
+    $this->imageStylesOperations($image_styles, $field_value['file-uri'], TRUE);
+    drupal_set_message(t('The crop "@cropType" are successfully added', ['@cropType' => $crop_type->label()]));
   }
 
   /**
@@ -260,17 +305,17 @@ class ImageWidgetCrop {
     foreach ($image_styles as $image_style) {
       /** @var \Drupal\crop\CropInterface $crop */
       $crop = $this->cropStorage->loadByProperties([
-          'type' => $crop_type->id(),
-          'uri' => $file_uri,
-          'image_style' => $image_style->getName(),
-        ]);
+        'type' => $crop_type->id(),
+        'uri' => $file_uri,
+        'image_style' => $image_style->getName(),
+      ]);
 
       if (isset($crop)) {
         $this->cropStorage->delete($crop);
-        // Flush the cache of this ImageStyle.
-        $image_style->flush($file_uri);
       }
     }
+    $this->imageStylesOperations($image_styles, $file_uri);
+    drupal_set_message(t('The crop "@cropType" are successfully delete', ['@cropType' => $crop_type->label()]));
   }
 
 }

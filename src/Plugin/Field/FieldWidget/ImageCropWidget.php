@@ -193,7 +193,7 @@ class ImageCropWidget extends ImageWidget {
                 // If the current crop have a position & sizes,
                 // calculate properties to apply crop selection into preview.
                 if (isset($crop_properties)) {
-                  $values = static::getThumbnailCropProperties($variables['uri'], $crop_properties);
+                  $values = self::getThumbnailCropProperties($variables['uri'], $crop_properties);
                 }
 
                 if (!empty($values)) {
@@ -264,7 +264,7 @@ class ImageCropWidget extends ImageWidget {
    *   thumbnail height, thumbnail width), to apply the real crop
    *   into thumbnail preview.
    */
-  public function getThumbnailCropProperties($uri, array $original_crop, $preview = 'crop_thumbnail') {
+  public static function getThumbnailCropProperties($uri, array $original_crop, $preview = 'crop_thumbnail') {
     $crop_thumbnail = [];
 
     // TODO PROCESS INJECTION.
