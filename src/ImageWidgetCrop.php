@@ -7,10 +7,10 @@
 
 namespace Drupal\image_widget_crop;
 
-use Drupal\crop\Entity\CropType;
-use Drupal\crop\Plugin\ImageEffect\CropEffect;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\crop\Entity\Crop;
+use Drupal\crop\Entity\CropType;
+use Drupal\crop\Plugin\ImageEffect\CropEffect;
 
 /**
  * ImageWidgetCrop calculation class.
@@ -191,7 +191,7 @@ class ImageWidgetCrop {
    * @param array $crop_selection
    *   Coordinates of crop selection (width & height).
    *
-   * @return array<integer>
+   * @return integer
    *   Coordinates (x-axis & y-axis) of crop selection zone.
    */
   public function getAxisCoordinates(array $axis, array $crop_selection) {
