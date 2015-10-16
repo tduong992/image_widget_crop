@@ -7,13 +7,39 @@
 
 namespace Drupal\image_widget_crop;
 
-use Drupal\image\Entity\ImageStyle;
 use Drupal\crop\Entity\CropType;
+use Drupal\crop\Plugin\ImageEffect\CropEffect;
+use Drupal\Core\Entity\EntityManagerInterface;
 
 /**
  * ImageWidgetCrop calculation class.
  */
 class ImageWidgetCrop {
+
+  /**
+   * The crop storage.
+   *
+   * @var \Drupal\crop\CropStorage.
+   */
+  protected $cropStorage;
+
+  /**
+   * The image style storage.
+   *
+   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage.
+   */
+  protected $imageStyleStorage;
+
+  /**
+   * Constructs a ImageWidgetCrop.
+   *
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
+   *   The entity manager.
+   */
+  public function __construct(EntityManagerInterface $entity_manager) {
+    $this->cropStorage = $entity_manager->getStorage('crop');
+    $this->imageStyleStorage = $entity_manager->getStorage('image_style');
+  }
 
   /**
    * Get original size of a thumbnail image.
@@ -35,19 +61,18 @@ class ImageWidgetCrop {
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
 
     if (isset($edit)) {
-      // @TODO use injection.
-      $crop = \Drupal::service('entity.manager')
-        ->getStorage('crop')->loadByProperties([
+      $crop = $this->cropStorage->loadByProperties([
           'type' => $crop_type->id(),
           'uri' => $field_value['file-uri'],
         ]);
-
       if (!empty($crop)) {
         /** @var \Drupal\crop\Entity\Crop $crop_entity */
         foreach ($crop as $crop_id => $crop_entity) {
           $crop_position = $crop_entity->position();
           $crop_size = $crop_entity->size();
           $old_crop = array_merge($crop_position, $crop_size);
+
+
           // Verify if the crop (dimensions / positions) have changed.
           if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
             return;
@@ -160,12 +185,12 @@ class ImageWidgetCrop {
    */
   public function getImageStylesByCrop($crop_type_name) {
     $styles = [];
-    $image_styles = ImageStyle::loadMultiple();
+    $image_styles = $this->imageStyleStorage->loadMultiple();
 
     foreach ($image_styles as $image_style) {
       /* @var  \Drupal\image\ImageEffectInterface $effect */
       foreach ($image_style->getEffects() as $uuid => $effect) {
-        if ($effect instanceof \Drupal\crop\Plugin\ImageEffect\CropEffect) {
+        if ($effect instanceof CropEffect) {
           if ($image_style->getEffect($uuid)
               ->getConfiguration()['data']['crop_type'] == $crop_type_name
           ) {
@@ -206,9 +231,8 @@ class ImageWidgetCrop {
       ];
 
       // Save crop with previous values.
-      // @TODO use injection.
       /** @var \Drupal\crop\CropInterface $crop */
-      $crop = \Drupal::entityManager()->getStorage('crop')->create($values);
+      $crop = $this->cropStorage->create($values);
       $crop->save();
 
       // Generate the image derivate uri.
@@ -234,21 +258,15 @@ class ImageWidgetCrop {
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      // @TODO use injection.
       /** @var \Drupal\crop\CropInterface $crop */
-      $crop = \Drupal::service('entity.manager')
-        ->getStorage('crop')->loadByProperties([
+      $crop = $this->cropStorage->loadByProperties([
           'type' => $crop_type->id(),
           'uri' => $file_uri,
           'image_style' => $image_style->getName(),
         ]);
 
       if (isset($crop)) {
-        // @TODO use injection.
-        /** @var \Drupal\crop\CropInterface $crop */
-        $crop_storage = \Drupal::entityManager()->getStorage('crop');
-        $crop_storage->delete($crop);
-
+        $this->cropStorage->delete($crop);
         // Flush the cache of this ImageStyle.
         $image_style->flush($file_uri);
       }

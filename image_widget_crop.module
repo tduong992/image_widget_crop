@@ -227,7 +227,7 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
           ->getCurrentRequest()->attributes->get('_route_params');
 
         /** @var \Drupal\image_widget_crop\ImageWidgetCrop $crop */
-        $crop = new ImageWidgetCrop();
+        $crop = \Drupal::service('image_widget_crop.manager');
 
         // Verify if the current form is an edit.
         if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {

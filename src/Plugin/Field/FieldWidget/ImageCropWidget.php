@@ -267,7 +267,7 @@ class ImageCropWidget extends ImageWidget {
   public function getThumbnailCropProperties($uri, array $original_crop, $preview = 'crop_thumbnail') {
     $crop_thumbnail = [];
 
-    /** TODO PROCESS INJECTION */
+    // TODO PROCESS INJECTION.
     $image_styles = \Drupal::service('entity.manager')
       ->getStorage('image_style')
       ->loadByProperties(['status' => TRUE, 'name' => $preview]);
