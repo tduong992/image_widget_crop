@@ -93,7 +93,7 @@ class ImageWidgetCrop {
     }
 
     /** @var \Drupal\crop\Entity\Crop $crop_entity */
-    foreach ($crop as $crop_id => $crop_entity) {
+    foreach ($crop as $crop_entity) {
       $crop_position = $crop_entity->position();
       $crop_size = $crop_entity->size();
       $old_crop = array_merge($crop_position, $crop_size);
@@ -124,7 +124,7 @@ class ImageWidgetCrop {
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
       if ($create_derivative) {
-        // Generate the image derivate uri.
+        // Generate the image derivative uri.
         $destination_uri = $image_style->buildUri($file_uri);
 
         // Create a derivative of the original image with a good uri.
@@ -191,7 +191,7 @@ class ImageWidgetCrop {
    * @param array $crop_selection
    *   Coordinates of crop selection (width & height).
    *
-   * @return integer
+   * @return array<double>
    *   Coordinates (x-axis & y-axis) of crop selection zone.
    */
   public function getAxisCoordinates(array $axis, array $crop_selection) {
