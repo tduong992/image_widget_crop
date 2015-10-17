@@ -79,23 +79,19 @@ class ImageWidgetCrop {
     // Get all imagesStyle used this crop_type.
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
 
-    foreach ($image_styles as $image_style) {
-      $crop = $this->cropStorage->loadByProperties([
-        'type' => $crop_type->id(),
-        'uri' => $field_value['file-uri'],
-        'image_style' => $image_style->id(),
-      ]);
+    if (!empty($image_styles) && isset($field_value['file-uri'])) {
+      $crops = $this->loadImageStyleByCrop($image_styles, $crop_type, $field_value['file-uri']);
     }
 
-    if (empty($crop)) {
+    if (!isset($crops) || empty($crops)) {
       $this->saveCrop($crop_properties, $field_value, $image_styles, $crop_type);
       return;
     }
 
-    /** @var \Drupal\crop\Entity\Crop $crop_entity */
-    foreach ($crop as $crop_entity) {
-      $crop_position = $crop_entity->position();
-      $crop_size = $crop_entity->size();
+    /** @var \Drupal\crop\Entity\Crop $crop */
+    foreach ($crops as $crop) {
+      $crop_position = $crop->position();
+      $crop_size = $crop->size();
       $old_crop = array_merge($crop_position, $crop_size);
 
       // Verify if the crop (dimensions / positions) have changed.
@@ -103,156 +99,11 @@ class ImageWidgetCrop {
         return;
       }
 
-      $this->updateCropProperties($crop_entity, $crop_properties);
+      $this->updateCropProperties($crop, $crop_properties);
       $this->imageStylesOperations($image_styles, $field_value['file-uri']);
       drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
     }
 
-  }
-
-  /**
-   * Apply different operation on ImageStyles.
-   *
-   * @param array $image_styles
-   *   All ImageStyles used by this cropType.
-   * @param string $file_uri
-   *   Uri of image uploaded by user.
-   * @param bool $create_derivative
-   *   Boolean to create an derivative of the image uploaded.
-   */
-  public function imageStylesOperations(array $image_styles, $file_uri, $create_derivative = FALSE) {
-    /** @var \Drupal\image\Entity\ImageStyle $image_style */
-    foreach ($image_styles as $image_style) {
-      if ($create_derivative) {
-        // Generate the image derivative uri.
-        $destination_uri = $image_style->buildUri($file_uri);
-
-        // Create a derivative of the original image with a good uri.
-        $image_style->createDerivative($file_uri, $destination_uri);
-      }
-      // Flush the cache of this ImageStyle.
-      $image_style->flush($file_uri);
-    }
-  }
-
-  /**
-   * Update existant crop entity properties.
-   *
-   * @param \Drupal\crop\Entity\Crop $crop
-   *   The crop object loaded.
-   * @param array $crop_properties
-   *   The machine name of ImageStyle.
-   */
-  public function updateCropProperties(Crop $crop, array $crop_properties) {
-    // Parse all properties if this crop have changed.
-    foreach ($crop_properties as $crop_coordinate => $value) {
-      // Edit the crop properties if he have changed.
-      $crop->set($crop_coordinate, $value, TRUE)
-        ->save();
-    }
-  }
-
-  /**
-   * Get the size and position of the crop.
-   *
-   * @param int $original_height
-   *   The original height of image.
-   * @param array $properties
-   *   The original height of image.
-   *
-   * @return array<double>
-   *   The data dimensions (width & height) into this ImageStyle.
-   */
-  public function getCropOriginalDimension($original_height, array $properties) {
-    $delta = $original_height / $properties['thumb-h'];
-
-    // Get Center coordinate of crop zone.
-    $axis_coordinate = $this->getAxisCoordinates(
-      ['x' => $properties['x1'], 'y' => $properties['y1']],
-      ['width' => $properties['crop-w'], 'height' => $properties['crop-h']]
-    );
-
-    // Calculate coordinates (position & sizes) of crop zone.
-    $crop_coordinates = $this->getCoordinates([
-      'width' => $properties['crop-w'],
-      'height' => $properties['crop-h'],
-      'x' => $axis_coordinate['x'],
-      'y' => $axis_coordinate['y'],
-    ], $delta);
-
-    return $crop_coordinates;
-  }
-
-  /**
-   * Get center of crop selection.
-   *
-   * @param int[] $axis
-   *   Coordinates of x-axis & y-axis.
-   * @param array $crop_selection
-   *   Coordinates of crop selection (width & height).
-   *
-   * @return array<double>
-   *   Coordinates (x-axis & y-axis) of crop selection zone.
-   */
-  public function getAxisCoordinates(array $axis, array $crop_selection) {
-    return [
-      'x' => (int) $axis['x'] + ($crop_selection['width'] / 2),
-      'y' => (int) $axis['y'] + ($crop_selection['height'] / 2),
-    ];
-  }
-
-  /**
-   * Calculate all coordinates for apply crop into original picture.
-   *
-   * @param array $properties
-   *   All properties returned by the crop plugin (js),
-   *   and the size of thumbnail image.
-   * @param int $delta
-   *   The calculated difference between original height and thumbnail height.
-   *
-   * @return array<double>
-   *   Coordinates (x & y or width & height) of crop.
-   */
-  public function getCoordinates(array $properties, $delta) {
-    $original_coordinates = [];
-
-    foreach ($properties as $key => $coordinate) {
-      if (isset($coordinate) && $coordinate >= 0) {
-        $original_coordinates[$key] = round($coordinate * $delta);
-      }
-    }
-
-    return $original_coordinates;
-  }
-
-  /**
-   * Get the imageStyle using this crop_type.
-   *
-   * @param string $crop_type_name
-   *   The id of the current crop_type entity.
-   *
-   * @return array
-   *   All imageStyle used by this crop_type.
-   */
-  public function getImageStylesByCrop($crop_type_name) {
-    $styles = [];
-    $image_styles = $this->imageStyleStorage->loadMultiple();
-
-    /** @var \Drupal\image\Entity\ImageStyle $image_style */
-    foreach ($image_styles as $image_style) {
-      /* @var  \Drupal\image\ImageEffectInterface $effect */
-      foreach ($image_style->getEffects() as $uuid => $effect) {
-        if ($effect instanceof CropEffect) {
-          if ($image_style->getEffect($uuid)
-              ->getConfiguration()['data']['crop_type'] == $crop_type_name
-          ) {
-            $styles[] = $image_style;
-          }
-        }
-      }
-    }
-
-    return $styles;
   }
 
   /**
@@ -316,6 +167,177 @@ class ImageWidgetCrop {
     }
     $this->imageStylesOperations($image_styles, $file_uri);
     drupal_set_message(t('The crop "@cropType" are successfully delete', ['@cropType' => $crop_type->label()]));
+  }
+
+  /**
+   * Get center of crop selection.
+   *
+   * @param int[] $axis
+   *   Coordinates of x-axis & y-axis.
+   * @param array $crop_selection
+   *   Coordinates of crop selection (width & height).
+   *
+   * @return array<double>
+   *   Coordinates (x-axis & y-axis) of crop selection zone.
+   */
+  public function getAxisCoordinates(array $axis, array $crop_selection) {
+    return [
+      'x' => (int) $axis['x'] + ($crop_selection['width'] / 2),
+      'y' => (int) $axis['y'] + ($crop_selection['height'] / 2),
+    ];
+  }
+
+  /**
+   * Get the size and position of the crop.
+   *
+   * @param int $original_height
+   *   The original height of image.
+   * @param array $properties
+   *   The original height of image.
+   *
+   * @return array<double>
+   *   The data dimensions (width & height) into this ImageStyle.
+   */
+  public function getCropOriginalDimension($original_height, array $properties) {
+    $delta = $original_height / $properties['thumb-h'];
+
+    // Get Center coordinate of crop zone.
+    $axis_coordinate = $this->getAxisCoordinates(
+      ['x' => $properties['x1'], 'y' => $properties['y1']],
+      ['width' => $properties['crop-w'], 'height' => $properties['crop-h']]
+    );
+
+    // Calculate coordinates (position & sizes) of crop zone.
+    $crop_coordinates = $this->getCoordinates([
+      'width' => $properties['crop-w'],
+      'height' => $properties['crop-h'],
+      'x' => $axis_coordinate['x'],
+      'y' => $axis_coordinate['y'],
+    ], $delta);
+
+    return $crop_coordinates;
+  }
+
+  /**
+   * Calculate all coordinates for apply crop into original picture.
+   *
+   * @param array $properties
+   *   All properties returned by the crop plugin (js),
+   *   and the size of thumbnail image.
+   * @param int $delta
+   *   The calculated difference between original height and thumbnail height.
+   *
+   * @return array<double>
+   *   Coordinates (x & y or width & height) of crop.
+   */
+  public function getCoordinates(array $properties, $delta) {
+    $original_coordinates = [];
+
+    foreach ($properties as $key => $coordinate) {
+      if (isset($coordinate) && $coordinate >= 0) {
+        $original_coordinates[$key] = round($coordinate * $delta);
+      }
+    }
+
+    return $original_coordinates;
+  }
+
+  /**
+   * Get the imageStyle using this crop_type.
+   *
+   * @param string $crop_type_name
+   *   The id of the current crop_type entity.
+   *
+   * @return array
+   *   All imageStyle used by this crop_type.
+   */
+  public function getImageStylesByCrop($crop_type_name) {
+    $styles = [];
+    $image_styles = $this->imageStyleStorage->loadMultiple();
+
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
+    foreach ($image_styles as $image_style) {
+      /* @var  \Drupal\image\ImageEffectInterface $effect */
+      foreach ($image_style->getEffects() as $uuid => $effect) {
+        if ($effect instanceof CropEffect) {
+          if ($image_style->getEffect($uuid)
+              ->getConfiguration()['data']['crop_type'] == $crop_type_name
+          ) {
+            $styles[] = $image_style;
+          }
+        }
+      }
+    }
+
+    return $styles;
+  }
+
+  /**
+   * Apply different operation on ImageStyles.
+   *
+   * @param array $image_styles
+   *   All ImageStyles used by this cropType.
+   * @param string $file_uri
+   *   Uri of image uploaded by user.
+   * @param bool $create_derivative
+   *   Boolean to create an derivative of the image uploaded.
+   */
+  public function imageStylesOperations(array $image_styles, $file_uri, $create_derivative = FALSE) {
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
+    foreach ($image_styles as $image_style) {
+      if ($create_derivative) {
+        // Generate the image derivative uri.
+        $destination_uri = $image_style->buildUri($file_uri);
+
+        // Create a derivative of the original image with a good uri.
+        $image_style->createDerivative($file_uri, $destination_uri);
+      }
+      // Flush the cache of this ImageStyle.
+      $image_style->flush($file_uri);
+    }
+  }
+
+  /**
+   * Update existant crop entity properties.
+   *
+   * @param \Drupal\crop\Entity\Crop $crop
+   *   The crop object loaded.
+   * @param array $crop_properties
+   *   The machine name of ImageStyle.
+   */
+  public function updateCropProperties(Crop $crop, array $crop_properties) {
+    // Parse all properties if this crop have changed.
+    foreach ($crop_properties as $crop_coordinate => $value) {
+      // Edit the crop properties if he have changed.
+      $crop->set($crop_coordinate, $value, TRUE)
+        ->save();
+    }
+  }
+
+  /**
+   * Load all crop using the ImageStyles.
+   *
+   * @param array $image_styles
+   *   All ImageStyle for this current CROP.
+   * @param CropType $crop_type
+   *   The entity CropType.
+   * @param string $file_uri
+   *   Uri of uploded file.
+   *
+   * @return array
+   *   All crop used this ImageStyle.
+   */
+  public function loadImageStyleByCrop(array $image_styles, CropType $crop_type, $file_uri) {
+    $crops = [];
+    foreach ($image_styles as $image_style) {
+      $crops[] = $this->cropStorage->loadByProperties([
+        'type' => $crop_type->id(),
+        'uri' => $file_uri,
+        'image_style' => $image_style->id(),
+      ]);
+    }
+
+    return $crops;
   }
 
 }
