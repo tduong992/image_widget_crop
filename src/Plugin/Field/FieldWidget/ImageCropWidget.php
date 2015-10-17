@@ -27,6 +27,9 @@ class ImageCropWidget extends ImageWidget {
 
   /**
    * {@inheritdoc}
+   *
+   * @return array
+   *   The array of settings.
    */
   public static function defaultSettings() {
     return [
@@ -110,7 +113,11 @@ class ImageCropWidget extends ImageWidget {
         '#weight' => 100,
       ];
 
-      if ($element['#crop_types_list'] && is_array($element['#crop_types_list'])) {
+      if (!is_array($element['#crop_types_list'])) {
+        throw new \RuntimeException('The crop types list must be an array.');
+      }
+
+      if ($element['#crop_types_list']) {
         /** @var \Drupal\crop\Entity\CropType $crop_type */
         foreach ($element['#crop_types_list'] as $crop_type) {
           $machine_name = $crop_type->id();
@@ -348,6 +355,9 @@ class ImageCropWidget extends ImageWidget {
 
   /**
    * {@inheritdoc}
+   *
+   * @return array
+   *   A short summary of the widget settings.
    */
   public function settingsSummary() {
     $preview = [];
