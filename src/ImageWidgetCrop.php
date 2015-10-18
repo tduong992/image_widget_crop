@@ -89,7 +89,8 @@ class ImageWidgetCrop {
     }
 
     /** @var \Drupal\crop\Entity\Crop $crop */
-    foreach ($crops as $crop) {
+    foreach ($crops as $image_style_id => $crop_element) {
+      $crop = current($crop_element);
       if ($crop instanceof Crop) {
         $crop_position = $crop->position();
         $crop_size = $crop->size();
@@ -354,7 +355,7 @@ class ImageWidgetCrop {
     $crops = [];
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      $crops = $this->cropStorage->loadByProperties([
+      $crops[$image_style->id()] = $this->cropStorage->loadByProperties([
         'type' => $crop_type->id(),
         'uri' => $file_uri,
         'image_style' => $image_style->id(),
