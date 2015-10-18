@@ -7,7 +7,6 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Render\Element;
-use Drupal\image_widget_crop\ImageWidgetCrop;
 use Drupal\file\Plugin\Field\FieldType\FileFieldItemList;
 
 /**
@@ -66,7 +65,7 @@ function template_preprocess_crop_list_items(array &$variables) {
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
-  $element += array('#attributes' => array());
+  $element += ['#attributes' => []];
 
   // Special handling for form elements.
   if (isset($element['#array_parents'])) {
@@ -100,7 +99,7 @@ function template_preprocess_crop_container(array &$variables) {
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
-  $element += array('#attributes' => array());
+  $element += ['#attributes' => []];
 
   // Special handling for form elements.
   if (isset($element['#array_parents'])) {
@@ -145,7 +144,7 @@ function template_preprocess_crop_sidebar(array &$variables) {
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
-  $element += array('#attributes' => array());
+  $element += ['#attributes' => []];
 
   // Special handling for form elements.
   if (isset($element['#array_parents'])) {
@@ -187,7 +186,7 @@ function template_preprocess_crop_image_container(array &$variables) {
   $variables['has_parent'] = FALSE;
   $element = $variables['element'];
   // Ensure #attributes is set.
-  $element += array('#attributes' => array());
+  $element += ['#attributes' => []];
 
   // Special handling for form elements.
   if (isset($element['#array_parents'])) {
@@ -280,14 +279,14 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
 function image_widget_crop_css_alter(&$css) {
   // Add FontAwesome.
   $fontawesome = '//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.min.css';
-  $css[$fontawesome] = array(
+  $css[$fontawesome] = [
     'data' => $fontawesome,
     'type' => 'external',
     'every_page' => TRUE,
     'media' => 'all',
     'preprocess' => FALSE,
     'group' => CSS_AGGREGATE_THEME,
-    'browsers' => array('IE' => TRUE, '!IE' => TRUE),
+    'browsers' => ['IE' => TRUE, '!IE' => TRUE],
     'weight' => -2,
-  );
+  ];
 }

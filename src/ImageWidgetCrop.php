@@ -10,7 +10,7 @@ namespace Drupal\image_widget_crop;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\crop\Entity\Crop;
 use Drupal\crop\Entity\CropType;
-use Drupal\crop\Plugin\ImageEffect\CropEffect;
+use Drupal\image\Entity\ImageStyle;
 
 /**
  * ImageWidgetCrop calculation class.
@@ -90,18 +90,20 @@ class ImageWidgetCrop {
 
     /** @var \Drupal\crop\Entity\Crop $crop */
     foreach ($crops as $crop) {
-      $crop_position = $crop->position();
-      $crop_size = $crop->size();
-      $old_crop = array_merge($crop_position, $crop_size);
+      if ($crop instanceof Crop) {
+        $crop_position = $crop->position();
+        $crop_size = $crop->size();
+        $old_crop = array_merge($crop_position, $crop_size);
 
-      // Verify if the crop (dimensions / positions) have changed.
-      if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
-        return;
+        // Verify if the crop (dimensions / positions) have changed.
+        if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+          return;
+        }
+
+        $this->updateCropProperties($crop, $crop_properties);
+        $this->imageStylesOperations($image_styles, $field_value['file-uri']);
+        drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
       }
-
-      $this->updateCropProperties($crop, $crop_properties);
-      $this->imageStylesOperations($image_styles, $field_value['file-uri']);
-      drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
     }
 
   }
@@ -154,16 +156,17 @@ class ImageWidgetCrop {
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      /** @var \Drupal\crop\CropInterface $crop */
       $crop = $this->cropStorage->loadByProperties([
         'type' => $crop_type->id(),
         'uri' => $file_uri,
         'image_style' => $image_style->getName(),
       ]);
 
-      if (isset($crop)) {
-        $this->cropStorage->delete($crop);
+      if (!isset($crop) || !is_array($crop)) {
+        throw new \RuntimeException('Verify integrity of your crop entity');
       }
+
+      $this->cropStorage->delete($crop);
     }
     $this->imageStylesOperations($image_styles, $file_uri);
     drupal_set_message(t('The crop "@cropType" are successfully delete', ['@cropType' => $crop_type->label()]));
@@ -243,6 +246,32 @@ class ImageWidgetCrop {
   }
 
   /**
+   * Get one effect instead of ImageStyle.
+   *
+   * @param \Drupal\image\Entity\ImageStyle $image_style
+   *   The ImageStyle to get data.
+   * @param string $data_type
+   *   The type of data needed in current ImageStyle.
+   *
+   * @return mixed|NULL
+   *   The effect data in current ImageStyle.
+   */
+  public function getEffectData(ImageStyle $image_style, $data_type) {
+    $data = NULL;
+    /* @var  \Drupal\image\ImageEffectInterface $effect */
+    foreach ($image_style->getEffects() as $uuid => $effect) {
+      if ($image_style->getEffect($uuid)
+        ->getConfiguration()['data'][$data_type]
+      ) {
+        $data = $image_style->getEffect($uuid)
+          ->getConfiguration()['data'][$data_type];
+      }
+    }
+
+    return $data;
+  }
+
+  /**
    * Get the imageStyle using this crop_type.
    *
    * @param string $crop_type_name
@@ -257,15 +286,9 @@ class ImageWidgetCrop {
 
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      /* @var  \Drupal\image\ImageEffectInterface $effect */
-      foreach ($image_style->getEffects() as $uuid => $effect) {
-        if ($effect instanceof CropEffect) {
-          if ($image_style->getEffect($uuid)
-              ->getConfiguration()['data']['crop_type'] == $crop_type_name
-          ) {
-            $styles[] = $image_style;
-          }
-        }
+      $image_style_data = $this->getEffectData($image_style, 'crop_type');
+      if (!empty($image_style_data) && ($image_style_data == $crop_type_name)) {
+        $styles[] = $image_style;
       }
     }
 
@@ -329,8 +352,9 @@ class ImageWidgetCrop {
    */
   public function loadImageStyleByCrop(array $image_styles, CropType $crop_type, $file_uri) {
     $crops = [];
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      $crops[] = $this->cropStorage->loadByProperties([
+      $crops = $this->cropStorage->loadByProperties([
         'type' => $crop_type->id(),
         'uri' => $file_uri,
         'image_style' => $image_style->id(),
