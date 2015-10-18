@@ -83,7 +83,8 @@ class ImageWidgetCrop {
       $crops = $this->loadImageStyleByCrop($image_styles, $crop_type, $field_value['file-uri']);
     }
 
-    if (!isset($crops) || empty($crops)) {
+    // If any crop exist add new crop.
+    if (empty($crops)) {
       $this->saveCrop($crop_properties, $field_value, $image_styles, $crop_type);
       return;
     }
@@ -355,11 +356,15 @@ class ImageWidgetCrop {
     $crops = [];
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      $crops[$image_style->id()] = $this->cropStorage->loadByProperties([
+      $crop_entities = $this->cropStorage->loadByProperties([
         'type' => $crop_type->id(),
         'uri' => $file_uri,
         'image_style' => $image_style->id(),
       ]);
+
+      if (!empty($crop_entities)) {
+        $crops[$image_style->id()] = $crop_entities;
+      }
     }
 
     return $crops;
