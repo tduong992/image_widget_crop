@@ -33,21 +33,21 @@ class ImageCropWidget extends ImageWidget {
   /**
    * Instance of API ImageWidgetCrop.
    *
-   * @var \Drupal\image_widget_crop\ImageWidgetCrop.
+   * @var \Drupal\image_widget_crop\ImageWidgetCrop
    */
   protected $imageWidgetCrop;
 
   /**
    * The image style storage.
    *
-   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage.
+   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage
    */
   protected $imageStyleStorage;
 
   /**
    * The crop type storage.
    *
-   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage.
+   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage
    */
   protected $cropTypeStorage;
 
@@ -111,7 +111,7 @@ class ImageCropWidget extends ImageWidget {
    */
   public static function process(array $element, FormStateInterface $form_state, array $form) {
     $edit = FALSE;
-    $thumb_properties = [];
+    $crop_types_list = $element['#crop_types_list'];
     $route_params = \Drupal::requestStack()->getCurrentRequest()->attributes->get('_route_params');
 
     if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {
@@ -176,18 +176,18 @@ class ImageCropWidget extends ImageWidget {
         '#weight' => 100,
       ];
 
-      if (!is_array($element['#crop_types_list'])) {
+      if (!is_array($crop_types_list)) {
         throw new \RuntimeException('The crop types list must be an array.');
       }
 
-      if ($element['#crop_types_list']) {
+      if ($crop_types_list) {
         /** @var \Drupal\crop\Entity\CropType $crop_type */
-        foreach ($element['#crop_types_list'] as $crop_type) {
+        foreach ($crop_types_list as $crop_type) {
           // Set this array to empty for any itteration.
-          $thumb_properties = [];
           $crop_type_id = $crop_type->id();
           $label = $crop_type->label();
           if (in_array($crop_type_id, $element['#crop_list'])) {
+            $thumb_properties = [];
             $ratio = !empty($crop_type->getAspectRatio()) ? $crop_type->getAspectRatio() : t('None');
 
             $element['crop_preview_wrapper']['list'][$crop_type_id] = [
@@ -290,7 +290,7 @@ class ImageCropWidget extends ImageWidget {
   /**
    * Set All sizes properties of the crops.
    *
-   * @return array
+   * @return array<array>
    *   Set all possible crop zone properties.
    */
   public static function setCoordinatesElement() {
@@ -312,7 +312,7 @@ class ImageCropWidget extends ImageWidget {
    * @param array $crops
    *   All crops attached to this file based on URI.
    *
-   * @return array<double>
+   * @return array<array>
    *   Get all crop zone properties (x, y, height, width),
    */
   public static function getCropProperties(array $crops) {
@@ -337,7 +337,7 @@ class ImageCropWidget extends ImageWidget {
    * @param bool $edit
    *   Context of this form.
    *
-   * @return array<double>
+   * @return array<array>
    *   Populate all crop elements into the form.
    */
   public static function getCropFormProperties(array $thumb_properties, $edit) {
@@ -364,7 +364,7 @@ class ImageCropWidget extends ImageWidget {
    * @param string $crop_type
    *   The id of the current crop.
    *
-   * @return array<double>
+   * @return array<array>
    *   Populate all crop elements into the form.
    */
   public static function getCropFormElement(array &$element, array $thumb_properties, $edit, $crop_type) {
