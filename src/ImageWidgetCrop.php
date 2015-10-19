@@ -182,7 +182,7 @@ class ImageWidgetCrop {
    * @param array $crop_selection
    *   Coordinates of crop selection (width & height).
    *
-   * @return array<string,double>
+   * @return integer
    *   Coordinates (x-axis & y-axis) of crop selection zone.
    */
   public function getAxisCoordinates(array $axis, array $crop_selection) {

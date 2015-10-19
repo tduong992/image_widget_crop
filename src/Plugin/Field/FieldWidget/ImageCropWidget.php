@@ -7,15 +7,14 @@
 
 namespace Drupal\image_widget_crop\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Config\Entity\ConfigEntityStorage;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
-use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\Render\Element;
 use Drupal\Core\Render\ElementInfoManagerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
 use Drupal\image_widget_crop\ImageWidgetCrop;
-use Drupal\Core\Config\Entity\ConfigEntityStorage;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin implementation of the 'image_widget_crop' widget.
