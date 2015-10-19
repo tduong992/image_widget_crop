@@ -96,8 +96,7 @@ class ImageWidgetCrop {
       $crop_size = $crop->size();
       $old_crop = array_merge($crop_position, $crop_size);
 
-      // Verify if the crop (dimensions / positions) have changed.
-      if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+      if (!$this->cropHasChanged($crop_properties, $old_crop)) {
         return;
       }
 
@@ -354,6 +353,27 @@ class ImageWidgetCrop {
     }
 
     return $crops;
+  }
+
+  /**
+   * Compare crop zone properties when user saved one crop.
+   *
+   * @param array $crop_properties
+   *   The crop properties after saved the form.
+   * @param array $old_crop
+   *   The crop properties save in this crop entity,
+   *   Only if this crop already exist.
+   *
+   * @return bool
+   *   True if properties not match.
+   */
+  public function cropHasChanged(array $crop_properties, array $old_crop) {
+    $has_changed = TRUE;
+    if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+      $has_changed = FALSE;
+    }
+
+    return $has_changed;
   }
 
 }

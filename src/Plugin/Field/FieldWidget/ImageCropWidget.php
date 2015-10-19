@@ -521,23 +521,23 @@ class ImageCropWidget extends ImageWidget {
 
     // Styles could be lost because of enabled/disabled modules that defines
     // their styles in code.
-    $image_style_setting = $this->getSetting('preview_image_style');
-    $crop_preview = $this->getSetting('crop_preview_image_style');
+    $image_style_setting = $image_styles[$this->getSetting('preview_image_style')];
+    $crop_preview = $image_styles[$this->getSetting('crop_preview_image_style')];
     $crop_list = $this->getSetting('crop_list');
 
-    if (!empty($crop_list)) {
-      $preview[] = t('Crop image style search: @list', ['@list' => implode(", ", $crop_list)]);
-    }
-
-    if (isset($image_styles[$image_style_setting])) {
-      $preview[] = t('Preview image style: @style', ['@style' => $image_styles[$image_style_setting]]);
+    if (isset($image_style_setting)) {
+      $preview[] = t('Preview image style: @style', ['@style' => $image_style_setting]);
     }
     else {
-      $preview = t('Original image');
+      $preview[] = t('No preview image style');
     }
 
-    if (isset($image_styles[$crop_preview])) {
-      $preview[] = t('Crop preview image style: @style', ['@style' => $image_styles[$crop_preview]]);
+    if (isset($crop_preview)) {
+      $preview[] = t('Crop zone preview image style: @style', ['@style' => $crop_preview]);
+    }
+
+    if (!empty($crop_list)) {
+      $preview[] = t('Crop image style active: @list', ['@list' => implode(", ", $crop_list)]);
     }
 
     return $preview;
