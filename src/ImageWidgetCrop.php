@@ -92,11 +92,8 @@ class ImageWidgetCrop {
     foreach ($crops as $crop_element) {
       /** @var \Drupal\crop\Entity\Crop $crop */
       $crop = current($crop_element);
-      $crop_position = $crop->position();
-      $crop_size = $crop->size();
-      $old_crop = array_merge($crop_position, $crop_size);
 
-      if ($this->cropHasChanged($crop_properties, $old_crop)) {
+      if ($this->cropHasChanged($crop_properties, array_merge($crop->position(), $crop->size()))) {
         return;
       }
 
@@ -229,9 +226,7 @@ class ImageWidgetCrop {
   public function getCoordinates(array $properties, $delta) {
     $original_coordinates = [];
     foreach ($properties as $key => $coordinate) {
-      if (isset($coordinate) && $coordinate >= 0) {
-        $original_coordinates[$key] = round($coordinate * $delta);
-      }
+      $original_coordinates[$key] = round($coordinate * $delta);
     }
 
     return $original_coordinates;
