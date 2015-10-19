@@ -96,7 +96,7 @@ class ImageWidgetCrop {
       $crop_size = $crop->size();
       $old_crop = array_merge($crop_position, $crop_size);
 
-      if (!$this->cropHasChanged($crop_properties, $old_crop)) {
+      if ($this->cropHasChanged($crop_properties, $old_crop)) {
         return;
       }
 
@@ -368,12 +368,7 @@ class ImageWidgetCrop {
    *   True if properties not match.
    */
   public function cropHasChanged(array $crop_properties, array $old_crop) {
-    $has_changed = TRUE;
-    if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
-      $has_changed = FALSE;
-    }
-
-    return $has_changed;
+    return (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height']));
   }
 
 }
