@@ -81,7 +81,7 @@ class ImageCropWidget extends ImageWidget {
   /**
    * {@inheritdoc}
    *
-   * @return array
+   * @return array<string,string|null>
    *   The array of settings.
    */
   public static function defaultSettings() {
@@ -176,14 +176,13 @@ class ImageCropWidget extends ImageWidget {
         '#weight' => 100,
       ];
 
-      if (!is_array($crop_types_list)) {
+      if (!empty($crop_types_list) && !is_array($crop_types_list)) {
         throw new \RuntimeException('The crop types list must be an array.');
       }
 
       if ($crop_types_list) {
-        /** @var \Drupal\crop\Entity\CropType $crop_type */
         foreach ($crop_types_list as $crop_type) {
-          // Set this array to empty for any itteration.
+          /** @var \Drupal\crop\Entity\CropType $crop_type */
           $crop_type_id = $crop_type->id();
           $label = $crop_type->label();
           if (in_array($crop_type_id, $element['#crop_list'])) {
@@ -290,7 +289,7 @@ class ImageCropWidget extends ImageWidget {
   /**
    * Set All sizes properties of the crops.
    *
-   * @return array<array>
+   * @return array<string,array>
    *   Set all possible crop zone properties.
    */
   public static function setCoordinatesElement() {
@@ -531,7 +530,7 @@ class ImageCropWidget extends ImageWidget {
   /**
    * {@inheritdoc}
    *
-   * @return array
+   * @return array<array>
    *   A short summary of the widget settings.
    */
   public function settingsSummary() {
@@ -564,6 +563,9 @@ class ImageCropWidget extends ImageWidget {
 
   /**
    * {@inheritdoc}
+   *
+   * @return array<string,array>
+   *   The form elements for a single widget for this field.
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     // Add properties needed by process() method.

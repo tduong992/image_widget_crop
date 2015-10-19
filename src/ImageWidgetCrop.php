@@ -89,8 +89,8 @@ class ImageWidgetCrop {
       return;
     }
 
-    /** @var \Drupal\crop\Entity\Crop $crop */
-    foreach ($crops as $image_style_id => $crop_element) {
+    foreach ($crops as $crop_element) {
+      /** @var \Drupal\crop\Entity\Crop $crop */
       $crop = current($crop_element);
       if ($crop instanceof Crop) {
         $crop_position = $crop->position();
@@ -182,7 +182,7 @@ class ImageWidgetCrop {
    * @param array $crop_selection
    *   Coordinates of crop selection (width & height).
    *
-   * @return array<double>
+   * @return array<string,double>
    *   Coordinates (x-axis & y-axis) of crop selection zone.
    */
   public function getAxisCoordinates(array $axis, array $crop_selection) {
