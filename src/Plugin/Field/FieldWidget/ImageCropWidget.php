@@ -335,7 +335,7 @@ class ImageCropWidget extends ImageWidget {
    * @param bool $edit
    *   Context of this form.
    *
-   * @return array<array>
+   * @return array<string,array>
    *   Populate all crop elements into the form.
    */
   public static function getCropFormProperties(array $thumb_properties, $edit) {
