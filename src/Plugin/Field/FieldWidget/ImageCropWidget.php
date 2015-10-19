@@ -111,7 +111,8 @@ class ImageCropWidget extends ImageWidget {
   public static function process(array $element, FormStateInterface $form_state, array $form) {
     $edit = FALSE;
     $crop_types_list = $element['#crop_types_list'];
-    $route_params = \Drupal::requestStack()->getCurrentRequest()->attributes->get('_route_params');
+    $route_params = \Drupal::requestStack()
+      ->getCurrentRequest()->attributes->get('_route_params');
 
     if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {
       $edit = TRUE;
@@ -125,43 +126,20 @@ class ImageCropWidget extends ImageWidget {
     // Add the image preview.
     if (!empty($element['#files']) && $element['#preview_image_style']) {
       $file = reset($element['#files']);
-      $variables = [
-        'style_name' => $element['#preview_image_style'],
-        'uri' => $file->getFileUri(),
-        'file_id' => $file->id(),
-      ];
-
-      // Determine image dimensions.
-      if (isset($element['#value']['width']) && isset($element['#value']['height'])) {
-        $variables['width'] = $element['#value']['width'];
-        $variables['height'] = $element['#value']['height'];
-      }
-      else {
-        /** @var \Drupal\Core\Image\Image $image */
-        $image = \Drupal::service('image.factory')->get($variables['uri']);
-        if ($image->isValid()) {
-          $variables['width'] = $image->getWidth();
-          $variables['height'] = $image->getHeight();
-        }
-        else {
-          $variables['width'] = $variables['height'] = NULL;
-        }
-      }
+      $variables = ['style_name' => $element['#preview_image_style'], 'uri' => $file->getFileUri(), 'file_id' => $file->id()];
+      // Verify if user have uploaded an image.
+      self::getFileImageVariables($element, $variables);
 
       $element['crop_preview_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => [
-          'class' => ['crop-wrapper'],
-        ],
+        '#attributes' => ['class' => ['crop-wrapper']],
         '#weight' => 100,
       ];
 
       // List crop_type container.
       $element['crop_preview_wrapper']['list'] = [
         '#type' => 'crop_sidebar',
-        '#attributes' => [
-          'class' => ['ratio-list'],
-        ],
+        '#attributes' => ['class' => ['ratio-list']],
         '#element_type' => 'ul',
         '#weight' => -10,
       ];
@@ -169,17 +147,11 @@ class ImageCropWidget extends ImageWidget {
       // Wrap crop elements.
       $element['crop_preview_wrapper']['container'] = [
         '#type' => 'crop_container',
-        '#attributes' => [
-          'class' => ['preview-wrapper-crop'],
-        ],
+        '#attributes' => ['class' => ['preview-wrapper-crop']],
         '#weight' => 100,
       ];
 
-      if (!empty($crop_types_list) && !is_array($crop_types_list)) {
-        throw new \RuntimeException('The crop types list must be an array.');
-      }
-
-      if ($crop_types_list) {
+      if (!empty($crop_types_list)) {
         foreach ($crop_types_list as $crop_type) {
           /** @var \Drupal\crop\Entity\CropType $crop_type */
           $crop_type_id = $crop_type->id();
@@ -190,26 +162,14 @@ class ImageCropWidget extends ImageWidget {
 
             $element['crop_preview_wrapper']['list'][$crop_type_id] = [
               '#type' => 'crop_list_items',
-              '#attributes' => [
-                'class' => ['crop-preview-wrapper', 'item'],
-                'data-ratio' => [$ratio],
-                'data-name' => [$crop_type_id],
-              ],
-              '#variables' => [
-                'anchor' => "#$crop_type_id",
-                'ratio' => $ratio,
-                'label' => $label
-              ]
+              '#attributes' => ['class' => ['crop-preview-wrapper', 'item'], 'data-ratio' => [$ratio], 'data-name' => [$crop_type_id]],
+              '#variables' => ['anchor' => "#$crop_type_id", 'ratio' => $ratio, 'label' => $label]
             ];
 
             // Generation of html List with image & crop informations.
             $element['crop_preview_wrapper']['container'][$crop_type_id] = [
               '#type' => 'crop_image_container',
-              '#attributes' => [
-                'class' => ['crop-preview-wrapper-list'],
-                'id' => [$crop_type_id],
-                'data-ratio' => [$ratio],
-              ],
+              '#attributes' => ['class' => ['crop-preview-wrapper-list'], 'id' => [$crop_type_id], 'data-ratio' => [$ratio]],
               '#variables' => ['label' => $label, 'ratio' => $ratio],
               '#weight' => -10,
             ];
@@ -217,25 +177,19 @@ class ImageCropWidget extends ImageWidget {
             $element['crop_preview_wrapper']['container'][$crop_type_id]['image'] = [
               '#theme' => 'image_style',
               '#style_name' => $element['#crop_preview_image_style'],
-              '#attributes' => [
-                'data-ratio' => [$ratio],
-                'data-name' => [$crop_type_id],
-              ],
+              '#attributes' => ['data-ratio' => [$ratio], 'data-name' => [$crop_type_id]],
               '#uri' => $variables['uri'],
               '#weight' => -10,
             ];
 
             if ($edit) {
-              $crops = \Drupal::service('entity.manager')->getStorage('crop')->loadByProperties([
-                'type' => $crop_type_id,
-                'uri' => $variables['uri'],
-              ]);
-
+              $crops = \Drupal::service('entity.manager')
+                ->getStorage('crop')
+                ->loadByProperties(['type' => $crop_type_id, 'uri' => $variables['uri']]);
               // Only if the crop already exist pre-populate,
               // all cordinates values.
-              if (isset($crops) && !empty($crops)) {
+              if (!empty($crops)) {
                 $crop_properties = self::getCropProperties($crops);
-
                 // Add "saved" class if the crop already exist,
                 // (in list & img container element).
                 $element['crop_preview_wrapper']['list'][$crop_type_id]['#attributes']['class'][] = 'saved';
@@ -243,19 +197,13 @@ class ImageCropWidget extends ImageWidget {
 
                 /** @var array $values */
                 $thumb_properties = self::getThumbnailCropProperties($variables['uri'], $crop_properties);
-
-                if (!is_array($thumb_properties) || empty($thumb_properties)) {
-                  throw new \RuntimeException('This crop have any properties, verify your crop configuration.');
-                }
               }
             }
 
             // Generation of html List with image & crop informations.
             $element['crop_preview_wrapper']['container'][$crop_type_id]['values'] = [
               '#type' => 'container',
-              '#attributes' => [
-                'class' => ['crop-preview-wrapper-value'],
-              ],
+              '#attributes' => ['class' => ['crop-preview-wrapper-value']],
               '#weight' => -9,
             ];
 
@@ -497,6 +445,38 @@ class ImageCropWidget extends ImageWidget {
   }
 
   /**
+   * Verify if the element have an image file.
+   *
+   * @param array $element
+   *   A form element array containing basic properties for the widget.
+   * @param array $variables
+   *   An array with all existant variables for render.
+   *
+   * @return array<string,array>
+   *   The variables with width & height image informations.
+   */
+  public static function getFileImageVariables(array $element, array &$variables) {
+    // Determine image dimensions.
+    if (isset($element['#value']['width']) && isset($element['#value']['height'])) {
+      $variables['width'] = $element['#value']['width'];
+      $variables['height'] = $element['#value']['height'];
+    }
+    else {
+      /** @var \Drupal\Core\Image\Image $image */
+      $image = \Drupal::service('image.factory')->get($variables['uri']);
+      if ($image->isValid()) {
+        $variables['width'] = $image->getWidth();
+        $variables['height'] = $image->getHeight();
+      }
+      else {
+        $variables['width'] = $variables['height'] = NULL;
+      }
+    }
+
+    return $variables;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
@@ -545,16 +525,19 @@ class ImageCropWidget extends ImageWidget {
     $crop_preview = $this->getSetting('crop_preview_image_style');
     $crop_list = $this->getSetting('crop_list');
 
-    if (isset($crop_list) && !empty($crop_list)) {
+    if (!empty($crop_list)) {
       $preview[] = t('Crop image style search: @list', ['@list' => implode(", ", $crop_list)]);
     }
 
-    if (isset($image_styles[$image_style_setting]) || isset($image_styles[$crop_preview])) {
+    if (isset($image_styles[$image_style_setting])) {
       $preview[] = t('Preview image style: @style', ['@style' => $image_styles[$image_style_setting]]);
-      $preview[] = t('Crop preview image style: @style', ['@style' => $image_styles[$crop_preview]]);
     }
     else {
       $preview = t('Original image');
+    }
+
+    if (isset($image_styles[$crop_preview])) {
+      $preview[] = t('Crop preview image style: @style', ['@style' => $image_styles[$crop_preview]]);
     }
 
     return $preview;

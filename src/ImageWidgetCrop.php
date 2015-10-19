@@ -79,7 +79,7 @@ class ImageWidgetCrop {
     // Get all imagesStyle used this crop_type.
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
 
-    if (!empty($image_styles) && isset($field_value['file-uri'])) {
+    if (!empty($image_styles)) {
       $crops = $this->loadImageStyleByCrop($image_styles, $crop_type, $field_value['file-uri']);
     }
 
@@ -92,22 +92,19 @@ class ImageWidgetCrop {
     foreach ($crops as $crop_element) {
       /** @var \Drupal\crop\Entity\Crop $crop */
       $crop = current($crop_element);
-      if ($crop instanceof Crop) {
-        $crop_position = $crop->position();
-        $crop_size = $crop->size();
-        $old_crop = array_merge($crop_position, $crop_size);
+      $crop_position = $crop->position();
+      $crop_size = $crop->size();
+      $old_crop = array_merge($crop_position, $crop_size);
 
-        // Verify if the crop (dimensions / positions) have changed.
-        if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
-          return;
-        }
-
-        $this->updateCropProperties($crop, $crop_properties);
-        $this->imageStylesOperations($image_styles, $field_value['file-uri']);
-        drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
+      // Verify if the crop (dimensions / positions) have changed.
+      if (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height'])) {
+        return;
       }
-    }
 
+      $this->updateCropProperties($crop, $crop_properties);
+      $this->imageStylesOperations($image_styles, $field_value['file-uri']);
+      drupal_set_message(t('The crop "@cropType" are successfully updated', ['@cropType' => $crop_type->label()]));
+    }
   }
 
   /**
@@ -163,11 +160,6 @@ class ImageWidgetCrop {
         'uri' => $file_uri,
         'image_style' => $image_style->getName(),
       ]);
-
-      if (!isset($crop) || !is_array($crop)) {
-        throw new \RuntimeException('Verify integrity of your crop entity');
-      }
-
       $this->cropStorage->delete($crop);
     }
     $this->imageStylesOperations($image_styles, $file_uri);
@@ -182,7 +174,7 @@ class ImageWidgetCrop {
    * @param array $crop_selection
    *   Coordinates of crop selection (width & height).
    *
-   * @return integer
+   * @return array<string,double>
    *   Coordinates (x-axis & y-axis) of crop selection zone.
    */
   public function getAxisCoordinates(array $axis, array $crop_selection) {
@@ -237,7 +229,6 @@ class ImageWidgetCrop {
    */
   public function getCoordinates(array $properties, $delta) {
     $original_coordinates = [];
-
     foreach ($properties as $key => $coordinate) {
       if (isset($coordinate) && $coordinate >= 0) {
         $original_coordinates[$key] = round($coordinate * $delta);
@@ -356,12 +347,7 @@ class ImageWidgetCrop {
     $crops = [];
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      $crop_entities = $this->cropStorage->loadByProperties([
-        'type' => $crop_type->id(),
-        'uri' => $file_uri,
-        'image_style' => $image_style->id(),
-      ]);
-
+      $crop_entities = $this->cropStorage->loadByProperties(['type' => $crop_type->id(), 'uri' => $file_uri, 'image_style' => $image_style->id()]);
       if (!empty($crop_entities)) {
         $crops[$image_style->id()] = $crop_entities;
       }
