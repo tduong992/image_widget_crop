@@ -22,8 +22,8 @@ Configuration
 
 * Create a Crop Type (`admin/structure/crop`)
 * Create ImageStyles 
-    * add Manual crop effect, using your Crop Type (to apply 
-      your crop selection).
+    * add Manual crop effect, using your Crop Type,
+      (to apply your crop selection).
 * Create an Image field.
 * In its form display, at `admin/structure/types/manage/page/form-display`:
     * set the widget for your field to ImageWidgetCrop 
@@ -32,5 +32,7 @@ Configuration
       you have an editorial site, you need to display an image on different 
       places. With this option, you can set an optimal crop zone for each of the
       image styles applied to the image
-* Set the display formatter Image and choose your image style or responsive image styles.
-* Go add an image with your widget and crop your picture by crop types used for this image.
+* Set the display formatter Image and choose your image style,
+  or responsive image styles.
+* Go add an image with your widget and crop your picture,
+  by crop types used for this image.
