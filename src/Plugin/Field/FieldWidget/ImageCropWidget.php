@@ -318,7 +318,7 @@ class ImageCropWidget extends ImageWidget {
         '#attributes' => [
           'class' => ["crop-$property"]
         ],
-        '#value' => !empty($edit) ? $value['value'] : NULL,
+        '#value' => (!empty($edit) && !empty($value['value'])) ? $value['value'] : $element['#value']['crop_preview_wrapper']['container'][$crop_type]['values'][$property],
       ];
     }
 
