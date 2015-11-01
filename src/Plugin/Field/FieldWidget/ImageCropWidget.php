@@ -88,7 +88,7 @@ class ImageCropWidget extends ImageWidget {
     return [
       'crop_preview_image_style' => 'crop_thumbnail',
       'crop_list' => NULL,
-      'crop_help_text' => 'HELP TEXT'
+      'crop_help_text' => 'Select an image size to crop'
     ] + parent::defaultSettings();
   }
 

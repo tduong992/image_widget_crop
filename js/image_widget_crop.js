@@ -18,7 +18,6 @@
    */
   Drupal.behaviors.image_widget_crop = {
     attach: function (context, settings) {
-      console.log('no !');
       var path = settings.path.currentPath;
       var edit = path.search('edit');
       $('section.ratio-list:not(.crop-processed)').addClass('crop-processed').each(function () {
@@ -86,9 +85,12 @@
 
                 $(saved_img).imgAreaSelect({
                   aspectRatio: $(item).data('ratio'),
+                  keys: true,
                   handles: true,
                   movable: true,
                   parent: $(this),
+                  minWidth: 50,
+                  minHeight: 50,
                   onSelectEnd: function (saved_img, selection) {
 
                     // Calculate X1 / Y1 position of crop zone.
@@ -122,7 +124,7 @@
             var listElement = $(this);
 
             // Create an crop instance.
-            var crop = $(img).imgAreaSelect({instance: true});
+            var crop = $(img).imgAreaSelect({instance: true, keys: true});
 
             var dataRatioName = $(this).data('name');
 
@@ -132,6 +134,8 @@
               parent: image_container,
               handles: true,
               movable: true,
+              minWidth: 50,
+              minHeight: 50,
               onSelectEnd: function (img, selection) {
 
                 // Calculate X1 / Y1 position of crop zone.
@@ -149,11 +153,13 @@
                 // Get size of thumbnail in UI.
                 $(width).val(img.width);
                 $(height).val(img.height);
+                // If user clic in crop zone not save it.
+                if (selection.width > 0 || selection.height > 0) {
+                  $('#' + dataRatioName).find('input.delete-crop').val('0');
 
-                $('#' + dataRatioName).find('input.delete-crop').val('0');
-
-                // When user have crop the selection mark saved.
-                $(listElement).addClass('saved');
+                  // When user have crop the selection mark saved.
+                  $(listElement).addClass('saved');
+                }
               }
             });
           }
@@ -174,6 +180,7 @@
 
         // Create an crop instance.
         $(this).closest('.crop-wrapper').find('#' + dataRatioName + ' img').imgAreaSelect({hide: true});
+        $(this).closest('.crop-wrapper').find('#crop-help').show();
       });
     }
   };
