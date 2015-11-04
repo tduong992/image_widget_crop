@@ -313,6 +313,7 @@
 .crop-wrapper .preview-wrapper-crop .crop-preview-wrapper-list#crop-help #crop-help-text{
   clear: both;
   margin: 0;
+  line-height: 30px;
 }
 
 .crop-wrapper .preview-wrapper-crop .crop-preview-wrapper-list .content-crop-img {
