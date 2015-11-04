@@ -65,7 +65,7 @@
 
           // Initialize plugin.
           image_container.show();
-
+          image_container.addClass('active');
           if (edit > -1 && $(this).hasClass('saved')) {
             var savedElements = $('div.js-form-managed-file section.preview-wrapper-crop > .crop-preview-wrapper-list');
             savedElements.each(function (i, item) {
@@ -173,14 +173,17 @@
 
         $(this).parents('li').removeClass('saved active');
         var dataRatioName = $(this).closest('.crop-preview-wrapper').data('name');
-
+        $(this).closest('.crop-wrapper').find('#' + dataRatioName).removeClass('active');
         $(this).closest('.crop-wrapper').find('#' + dataRatioName + ' .crop-preview-wrapper-value input').removeAttr('value');
         $(this).closest('.crop-wrapper').find('#' + dataRatioName + ' input.delete-crop').val('1');
         $(this).closest('.crop-wrapper').find('#' + dataRatioName).hide();
-
+        $(this).closest('.crop-wrapper').find('#crop-help').show();
+        // If you have an slide active not show help slide.
+        if ($(this).closest('.crop-wrapper').find('.crop-preview-wrapper-list.active').length) {
+          $(this).closest('.crop-wrapper').find('#crop-help').hide();
+        }
         // Create an crop instance.
         $(this).closest('.crop-wrapper').find('#' + dataRatioName + ' img').imgAreaSelect({hide: true});
-        $(this).closest('.crop-wrapper').find('#crop-help').show();
       });
     }
   };
