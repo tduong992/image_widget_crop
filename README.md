@@ -17,7 +17,7 @@ You can Test ImageWidgetCrop in action directly with the sub-module,
 
 Configuration
 -------------
-@see Drupal Média D8 Guide 
+@see Drupal Média D8 Guide [ImageWidgetCrop Guide].
 [ImageWidgetCrop Guide]: https://drupal-media.gitbooks.io/drupal8-guide/content/modules/image_widget_crop/index.html
 * Create a Crop Type (`admin/structure/crop`)
 * Create ImageStyles 
