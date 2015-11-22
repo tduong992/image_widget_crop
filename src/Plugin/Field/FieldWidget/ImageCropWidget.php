@@ -314,7 +314,7 @@ class ImageCropWidget extends ImageWidget {
    * @param string $crop_type
    *   The id of the current crop.
    *
-   * @return array<array>|NULL
+   * @return array|NULL
    *   Populate all crop elements into the form.
    */
   public static function getCropFormElement(array &$element, array $thumb_properties, $edit, $crop_type) {
@@ -353,12 +353,13 @@ class ImageCropWidget extends ImageWidget {
    * @param string $property
    *   Name of current property @see setCoordinatesElement().
    *
-   * @return int|NULL
+   * @return integer|NULL
    *   Value of this element.
    */
   public static function getCropFormPropertyValue(array &$element, $crop_type, $edit, $value, $property) {
     // Standard case.
     if (!empty($edit) && !empty($value)) {
+      kint($value);
       return $value;
     }
     // Populate value when ajax populates values after process.
