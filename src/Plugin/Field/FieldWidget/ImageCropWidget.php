@@ -359,7 +359,6 @@ class ImageCropWidget extends ImageWidget {
   public static function getCropFormPropertyValue(array &$element, $crop_type, $edit, $value, $property) {
     // Standard case.
     if (!empty($edit) && !empty($value)) {
-      kint($value);
       return $value;
     }
     // Populate value when ajax populates values after process.
