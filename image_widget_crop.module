@@ -293,7 +293,7 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
             // If the entity already exist & is not deleted by,
             // user update $crop_type_name crop entity.
             if ((!$entity->isNew() && $properties['delete-crop'] == '0') && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
-              $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
+              $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name], FALSE);
             }
 
             // If you need to delete existing crop when you edit this entity.
