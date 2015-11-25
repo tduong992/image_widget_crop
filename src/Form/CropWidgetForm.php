@@ -18,6 +18,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class CropWidgetForm extends ConfigFormBase {
 
   /**
+   * The settings of image_widget_crop configuration.
+   *
+   * @var array
+   *
+   * @see \Drupal\Core\Config\Config
+   */
+  protected $settings;
+
+  /**
    * Constructs a CropWidgetForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -25,6 +34,7 @@ class CropWidgetForm extends ConfigFormBase {
    */
   public function __construct(ConfigFactoryInterface $config_factory) {
     parent::__construct($config_factory);
+    $this->settings = $this->config('image_widget_crop.settings');
   }
 
   /**
@@ -40,26 +50,25 @@ class CropWidgetForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'crop_widget_settings';
+    return 'image_widget_crop_settings_form';
   }
 
   /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
-    return ['iwc.crop-widget'];
+    return ['image_widget_crop.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\Core\Config\Config $config */
-    $config = $this->config('iwc.crop-widget');
+    //kint($this->settings->get('settings.crop_upload_location'));
     $form['crop_upload_location'] = array(
       '#type' => 'textfield',
       '#title' => t('Image upload location path'),
-      '#default_value' => !empty($config->get('crop_upload_location')) ? $config->get('crop_upload_location') : 'public://crop/pictures/',
+      '#default_value' => $this->settings->get('settings.crop_upload_location'),
       '#maxlength' => 255,
       '#description' => t('A local file system path where croped images files will be stored. Spécify the location of files instead of \'sites/default/files\' folder')
     );
@@ -71,11 +80,11 @@ class CropWidgetForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    /** @var \Drupal\Core\Config\Config $config */
-    $config = $this->config('iwc.crop-widget')
-      ->set('crop_upload_location', $form_state->getValue('crop_upload_location'));
-    $config->save();
-
+    foreach (['crop_upload_location'] as $form_element_name) {
+      $value = $form_state->getValue($form_element_name);
+      $this->settings->set("settings.$form_element_name", $value);
+    }
+    $this->settings->save();
     parent::submitForm($form, $form_state);
   }
 
