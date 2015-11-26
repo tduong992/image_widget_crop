@@ -8,7 +8,11 @@ ImageWidgetCrop module
 Provides an interface for using the features of the [Crop API]. Module is still 
 under heavy development.
 
-[Crop API]: https://github.com/drupal-media/crop
+[Crop API]: https://github.com/drupal-media/cro
+
+Development 
+-----------
+We use Github pull request workflow. In order to contribute to the module please [create a pull request](https://github.com/woprrr/image_widget_crop/compare) and cross-link it with the [relevant drupal.org issue](https://www.drupal.org/project/issues/2571403).
 
 Try me
 ------
