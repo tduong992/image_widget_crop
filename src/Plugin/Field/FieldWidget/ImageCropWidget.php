@@ -250,14 +250,10 @@ class ImageCropWidget extends ImageWidget {
    */
   public static function setCoordinatesElement() {
     return [
-      'x1' => ['label' => t('Crop x1'), 'value' => NULL],
-      'x2' => ['label' => t('Crop x2'), 'value' => NULL],
-      'y1' => ['label' => t('Crop y1'), 'value' => NULL],
-      'y2' => ['label' => t('Crop y2'), 'value' => NULL],
-      'crop-w' => ['label' => t('Crop size width'), 'value' => NULL],
-      'crop-h' => ['label' => t('Crop size height'), 'value' => NULL],
-      'thumb-w' => ['label' => t('Thumbnail Width'), 'value' => NULL],
-      'thumb-h' => ['label' => t('Thumbnail Height'), 'value' => NULL],
+      'x' => ['label' => t('X coordinate'), 'value' => NULL],
+      'y' => ['label' => t('Y coordinate'), 'value' => NULL],
+      'width' => ['label' => t('Width'), 'value' => NULL],
+      'height' => ['label' => t('Height'), 'value' => NULL],
     ];
   }
 
