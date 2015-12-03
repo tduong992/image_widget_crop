@@ -110,17 +110,49 @@ function image_widget_crop_css_alter(&$css) {
 }
 
 /**
+ * Implements hook_libraries_info().
+ */
+function image_widget_crop_libraries_info() {
+  $libraries = array(
+    'cropper' => array(
+      'name' => 'cropper',
+      'vendor url' => 'https://github.com/fengyuanchen/cropper',
+      'download url' => 'https://cdnjs.com/libraries/cropper',
+      'version arguments' => array(
+        'file' => 'cropper.min.js',
+        'pattern' => '/Cropper v(.*)/',
+        'lines' => 2,
+      ),
+      'files' => array(
+        'js' => array(
+          'cropper.min.js' => array(),
+        ),
+        'css' => array(
+          'cropper.min.css' => array(),
+        ),
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
  * Implements hook_library_info_alter().
  */
-function image_widget_croplibrary_info_alter(&$libraries, $extension) {
+function image_widget_crop_library_info_alter(&$libraries, $extension) {
+  if ($extension != 'image_widget_crop') {
+    return;
+  }
+
   // Get the correct path of the Cropper js file (the user needs to manually
   // put the jquery.cropper.min.js in libraries/cropper folder or set the url
   // in the settings).
   $config = \Drupal::config('image_widget_crop.settings');
-  if ($library_url = $config->get('library_url')) {
-    // Cloud hosted player, use external JavaScript.
+  if ($library_url = $config->get('settings.library_url')) {
+    // Cloud hosted library, use external JavaScript.
     $libraries['cropper']['js'][$library_url] = array(
       'type' => 'external',
+      'minified' => TRUE,
     );
   }
   elseif (\Drupal::moduleHandler()->moduleExists('libraries')) {
@@ -141,6 +173,36 @@ function image_widget_croplibrary_info_alter(&$libraries, $extension) {
           }
 
           $libraries['cropper']['js'][$data] = $option;
+        }
+      }
+    }
+  }
+
+  if ($css_url = $config->get('settings.css_url')) {
+    // Cloud hosted library, use external CSS.
+    $libraries['cropper']['css']['component'][$css_url] = array(
+      'type' => 'external',
+      'minified' => TRUE,
+    );
+  }
+  elseif (\Drupal::moduleHandler()->moduleExists('libraries')) {
+    $info = libraries_detect('cropper');
+    $libraries['cropper'] += array(
+      'version' => $info['installed'] ? $info['version'] : 'web-hosted',
+    );
+    if ($info['installed']) {
+      // Because the library is self hosted, use files from library definition.
+      if (!empty($info['files']['css'])) {
+        foreach ($info['files']['css'] as $data => $option) {
+
+          if (is_numeric($data)) {
+            $option = "/{$info['library path']}/{$option}";
+          }
+          elseif (empty($option['type']) || $option['type'] == 'file') {
+            $data = "/{$info['library path']}/{$data}";
+          }
+
+          $libraries['cropper']['css']['theme'][$data] = $option;
         }
       }
     }
