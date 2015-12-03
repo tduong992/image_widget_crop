@@ -108,3 +108,41 @@ function image_widget_crop_css_alter(&$css) {
     'weight' => -2,
   ];
 }
+
+/**
+ * Implements hook_library_info_alter().
+ */
+function image_widget_croplibrary_info_alter(&$libraries, $extension) {
+  // Get the correct path of the Cropper js file (the user needs to manually
+  // put the jquery.cropper.min.js in libraries/cropper folder or set the url
+  // in the settings).
+  $config = \Drupal::config('image_widget_crop.settings');
+  if ($library_url = $config->get('library_url')) {
+    // Cloud hosted player, use external JavaScript.
+    $libraries['cropper']['js'][$library_url] = array(
+      'type' => 'external',
+    );
+  }
+  elseif (\Drupal::moduleHandler()->moduleExists('libraries')) {
+    $info = libraries_detect('cropper');
+    $libraries['cropper'] += array(
+      'version' => $info['installed'] ? $info['version'] : 'web-hosted',
+    );
+    if ($info['installed']) {
+      // Because the library is self hosted, use files from library definition.
+      if (!empty($info['files']['js'])) {
+        foreach ($info['files']['js'] as $data => $option) {
+
+          if (is_numeric($data)) {
+            $option = "/{$info['library path']}/{$option}";
+          }
+          elseif (empty($option['type']) || $option['type'] == 'file') {
+            $data = "/{$info['library path']}/{$data}";
+          }
+
+          $libraries['cropper']['js'][$data] = $option;
+        }
+      }
+    }
+  }
+}
