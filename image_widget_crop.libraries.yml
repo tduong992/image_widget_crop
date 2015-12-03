@@ -1,23 +1,23 @@
-drupal.image_widget_crop.admin:
-  version: VERSION
+cropper:
+  title: 'Cropper'
+  website: http://fengyuanchen.github.io/cropper/
+  version: 2.1.0
+  license:
+    name: MIT
+    url: https://github.com/fengyuanchen/cropper/blob/master/LICENSE
+    gpl-compatible: true
   js:
-    //cdnjs.cloudflare.com/ajax/libs/imgareaselect/0.9.10/js/jquery.imgareaselect.min.js: {}
+    /libraries/cropper/dist/cropper.min.js: {}
   css:
-    theme:
-      //cdnjs.cloudflare.com/ajax/libs/imgareaselect/0.9.10/css/imgareaselect-default.css: {}
+    component:
+      /libraries/cropper/dist/cropper.min.css: {}
+cropper.integration:
+  version: 1.0
+  js:
+    js/cropper.integration.js: {}
   dependencies:
     - core/jquery
     - core/drupal
-    - core/jquery.once
+    - core/drupalSettings
+    - image_widget_crop/cropper
 
-drupal.image_widget_crop.upload.admin:
-  version: VERSION
-  js:
-    js/image_widget_crop.js: {}
-  css:
-    theme:
-      css/image_widget_crop.css: {}
-  dependencies:
-    - core/jquery
-    - core/drupal
-    - core/jquery.once
