@@ -57,6 +57,9 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
               ->getStorage('crop_type')
               ->loadByProperties(['id' => $crop_type_name]);
 
+            // @TODO: This shouldnt be need
+            $properties['values'] = $properties['crop_container']['values'];
+
             // If the crop type needed is disabled or delete.
             if (!isset($crop_type[$crop_type_name]) || empty($crop_type[$crop_type_name])) {
               drupal_set_message(t("The CropType ('@cropType') is not active or not defined. Please verify configuration of image style or ImageWidgetCrop formatter configuration", ['@cropType' => $crop_type_name]), 'error');
@@ -64,7 +67,7 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
             }
 
             // If this crop is availables to create an crop entity.
-            if (($entity->isNew() && $properties['values']['delete-crop'] == '0') && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
+            if (($entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
               // Get crop type for current cropType.
               if (!isset($crop_type) && empty($crop_type)) {
                 drupal_set_message(t("The type of crop does not exist, please check the configuration of the CropType ('@cropType')", ['@cropType' => $crop_type->label()]), 'error');
@@ -76,14 +79,14 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
 
             // If the entity already exist & is not deleted by,
             // user update $crop_type_name crop entity.
-            if ((!$entity->isNew() && $properties['values']['delete-crop'] == '0') && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
+            if ((!$entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
               $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
             }
 
             // If you need to delete existing crop when you edit this entity.
-            if (!$entity->isNew() && $properties['values']['delete-crop'] == '1') {
+            /*if (!$entity->isNew() && $properties['values']['delete-crop'] == '1') {
               $crop->deleteCrop($crop_element['file-uri'], $crop_type[$crop_type_name], $crop_element['file-id']);
-            }
+            }*/
           }
         }
       }

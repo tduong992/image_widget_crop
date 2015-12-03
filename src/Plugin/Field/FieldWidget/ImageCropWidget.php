@@ -201,9 +201,6 @@ class ImageCropWidget extends ImageWidget {
                 // Only if the crop already exist pre-populate,
                 // all cordinates values.
                 $crop_properties = self::getCropProperties($crops);
-                // Add "saved" class if the crop already exist,
-                // (in list & img container element).
-                $element[$crop_type_id][$element_wrapper_name]['#attributes']['class'][] = 'saved';
 
                 /** @var \Drupal\Core\Image\Image $image */
                 $image = \Drupal::service('image.factory')->get($file->getFileUri());
@@ -254,6 +251,8 @@ class ImageCropWidget extends ImageWidget {
       'y' => ['label' => t('Y coordinate'), 'value' => NULL],
       'width' => ['label' => t('Width'), 'value' => NULL],
       'height' => ['label' => t('Height'), 'value' => NULL],
+      'thumb-w' => ['label' => t('Thumbnail Width'), 'value' => NULL],
+      'thumb-h' => ['label' => t('Thumbnail Height'), 'value' => NULL],
     ];
   }
 
@@ -321,32 +320,22 @@ class ImageCropWidget extends ImageWidget {
    *   Populate all crop elements into the form.
    */
   public static function getCropFormElement(array &$element, $element_wrapper_name, array $thumb_properties, $edit, $crop_type_id) {
-    if ($crop_type_id != 'crop_help') {
-      $crop_properties = self::getCropFormProperties($thumb_properties, $edit);
-      // Generate all cordinates elements into the form when,
-      // process is active.
-      foreach ($crop_properties as $property => $value) {
-        $crop_element = &$element['crop_preview_wrapper'][$crop_type_id][$element_wrapper_name]['values'][$property];
-        $value_property = self::getCropFormPropertyValue($element, $crop_type_id, $edit, $value['value'], $property);
-        $crop_element = [
-          '#type' => 'hidden',
-          '#attributes' => [
-            'class' => ["crop-$property"]
-          ],
-          '#value' => $value_property,
-        ];
-      }
-
-      // Prepare last element to delete crop.
-      $element['crop_preview_wrapper'][$crop_type_id][$element_wrapper_name]['values']['delete-crop'] = [
+    $crop_properties = self::getCropFormProperties($thumb_properties, $edit);
+    // Generate all cordinates elements into the form when,
+    // process is active.
+    foreach ($crop_properties as $property => $value) {
+      $crop_element = &$element['crop_preview_wrapper'][$crop_type_id][$element_wrapper_name]['values'][$property];
+      $value_property = self::getCropFormPropertyValue($element, $crop_type_id, $edit, $value['value'], $property);
+      $crop_element = [
         '#type' => 'hidden',
-        '#attributes' => ['class' => ["delete-crop"]],
-        '#value' => 0,
+        '#attributes' => [
+          'class' => ["crop-$property"]
+        ],
+        '#value' => $value_property,
       ];
-
-      return $element;
     }
-    return NULL;
+
+    return $element;
   }
 
   /**
@@ -434,20 +423,15 @@ class ImageCropWidget extends ImageWidget {
 
     // Get the Crop selection Size (into Uploaded image) &,
     // calculate selection for Thumbnail.
-    $crop_thumbnail['crop-h'] = round($original_crop['size']['height'] / $delta);
-    $crop_thumbnail['crop-w'] = round($original_crop['size']['width'] / $delta);
+    $crop_thumbnail['height'] = round($original_crop['size']['height'] / $delta);
+    $crop_thumbnail['width'] = round($original_crop['size']['width'] / $delta);
 
     // Calculate the Top-Left corner for Thumbnail.
-    $crop_thumbnail['x1'] = round($original_crop['anchor']['x'] / $delta);
-    $crop_thumbnail['y1'] = round($original_crop['anchor']['y'] / $delta);
-
-    // Calculate the Bottom-right position for Thumbnail.
-    $crop_thumbnail['x2'] = $crop_thumbnail['x1'] + $crop_thumbnail['crop-w'];
-    $crop_thumbnail['y2'] = $crop_thumbnail['y1'] + $crop_thumbnail['crop-h'];
-
     // Get the real thumbnail sizes.
     $crop_thumbnail['thumb-w'] = $thumbnail_width;
     $crop_thumbnail['thumb-h'] = $thumbnail_height;
+    $crop_thumbnail['x'] = round($original_crop['anchor']['x'] / $delta);
+    $crop_thumbnail['y'] = round($original_crop['anchor']['y'] / $delta);
 
     return $crop_thumbnail;
   }
