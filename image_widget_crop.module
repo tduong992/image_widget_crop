@@ -57,6 +57,9 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
               ->getStorage('crop_type')
               ->loadByProperties(['id' => $crop_type_name]);
 
+            // @TODO: This shouldnt be need
+            $properties['values'] = $properties['crop_container']['values'];
+
             // If the crop type needed is disabled or delete.
             if (!isset($crop_type[$crop_type_name]) || empty($crop_type[$crop_type_name])) {
               drupal_set_message(t("The CropType ('@cropType') is not active or not defined. Please verify configuration of image style or ImageWidgetCrop formatter configuration", ['@cropType' => $crop_type_name]), 'error');
@@ -64,7 +67,7 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
             }
 
             // If this crop is availables to create an crop entity.
-            if (($entity->isNew() && $properties['values']['delete-crop'] == '0') && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
+            if (($entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
               // Get crop type for current cropType.
               if (!isset($crop_type) && empty($crop_type)) {
                 drupal_set_message(t("The type of crop does not exist, please check the configuration of the CropType ('@cropType')", ['@cropType' => $crop_type->label()]), 'error');
@@ -76,14 +79,14 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
 
             // If the entity already exist & is not deleted by,
             // user update $crop_type_name crop entity.
-            if ((!$entity->isNew() && $properties['values']['delete-crop'] == '0') && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
+            if ((!$entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
               $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
             }
 
             // If you need to delete existing crop when you edit this entity.
-            if (!$entity->isNew() && $properties['values']['delete-crop'] == '1') {
+            /*if (!$entity->isNew() && $properties['values']['delete-crop'] == '1') {
               $crop->deleteCrop($crop_element['file-uri'], $crop_type[$crop_type_name], $crop_element['file-id']);
-            }
+            }*/
           }
         }
       }
@@ -107,4 +110,104 @@ function image_widget_crop_css_alter(&$css) {
     'browsers' => ['IE' => TRUE, '!IE' => TRUE],
     'weight' => -2,
   ];
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function image_widget_crop_libraries_info() {
+  $libraries = array(
+    'cropper' => array(
+      'name' => 'cropper',
+      'vendor url' => 'https://github.com/fengyuanchen/cropper',
+      'download url' => 'https://cdnjs.com/libraries/cropper',
+      'version arguments' => array(
+        'file' => 'cropper.min.js',
+        'pattern' => '/Cropper v(.*)/',
+        'lines' => 2,
+      ),
+      'files' => array(
+        'js' => array(
+          'cropper.min.js' => array(),
+        ),
+        'css' => array(
+          'cropper.min.css' => array(),
+        ),
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Implements hook_library_info_alter().
+ */
+function image_widget_crop_library_info_alter(&$libraries, $extension) {
+  if ($extension != 'image_widget_crop') {
+    return;
+  }
+
+  // Get the correct path of the Cropper js file (the user needs to manually
+  // put the jquery.cropper.min.js in libraries/cropper folder or set the url
+  // in the settings).
+  $config = \Drupal::config('image_widget_crop.settings');
+  if ($library_url = $config->get('settings.library_url')) {
+    // Cloud hosted library, use external JavaScript.
+    $libraries['cropper']['js'][$library_url] = array(
+      'type' => 'external',
+      'minified' => TRUE,
+    );
+  }
+  elseif (\Drupal::moduleHandler()->moduleExists('libraries')) {
+    $info = libraries_detect('cropper');
+    $libraries['cropper'] += array(
+      'version' => $info['installed'] ? $info['version'] : 'web-hosted',
+    );
+    if ($info['installed']) {
+      // Because the library is self hosted, use files from library definition.
+      if (!empty($info['files']['js'])) {
+        foreach ($info['files']['js'] as $data => $option) {
+
+          if (is_numeric($data)) {
+            $option = "/{$info['library path']}/{$option}";
+          }
+          elseif (empty($option['type']) || $option['type'] == 'file') {
+            $data = "/{$info['library path']}/{$data}";
+          }
+
+          $libraries['cropper']['js'][$data] = $option;
+        }
+      }
+    }
+  }
+
+  if ($css_url = $config->get('settings.css_url')) {
+    // Cloud hosted library, use external CSS.
+    $libraries['cropper']['css']['component'][$css_url] = array(
+      'type' => 'external',
+      'minified' => TRUE,
+    );
+  }
+  elseif (\Drupal::moduleHandler()->moduleExists('libraries')) {
+    $info = libraries_detect('cropper');
+    $libraries['cropper'] += array(
+      'version' => $info['installed'] ? $info['version'] : 'web-hosted',
+    );
+    if ($info['installed']) {
+      // Because the library is self hosted, use files from library definition.
+      if (!empty($info['files']['css'])) {
+        foreach ($info['files']['css'] as $data => $option) {
+
+          if (is_numeric($data)) {
+            $option = "/{$info['library path']}/{$option}";
+          }
+          elseif (empty($option['type']) || $option['type'] == 'file') {
+            $data = "/{$info['library path']}/{$data}";
+          }
+
+          $libraries['cropper']['css']['theme'][$data] = $option;
+        }
+      }
+    }
+  }
 }

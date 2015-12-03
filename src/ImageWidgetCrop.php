@@ -211,14 +211,15 @@ class ImageWidgetCrop {
 
     // Get Center coordinate of crop zone.
     $axis_coordinate = $this->getAxisCoordinates(
-      ['x' => $properties['x1'], 'y' => $properties['y1']],
-      ['width' => $properties['crop-w'], 'height' => $properties['crop-h']]
+      ['x' => $properties['x'], 'y' => $properties['y']],
+      ['width' => $properties['width'], 'height' => $properties['height']]
     );
+
 
     // Calculate coordinates (position & sizes) of crop zone.
     $crop_coordinates = $this->getCoordinates([
-      'width' => $properties['crop-w'],
-      'height' => $properties['crop-h'],
+      'width' => $properties['width'],
+      'height' => $properties['height'],
       'x' => $axis_coordinate['x'],
       'y' => $axis_coordinate['y'],
     ], $delta);

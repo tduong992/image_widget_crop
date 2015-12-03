@@ -1,20 +1,15 @@
 cropper:
   title: 'Cropper'
-  website: http://fengyuanchen.github.io/cropper/
-  version: 2.1.0
-  license:
-    name: MIT
-    url: https://github.com/fengyuanchen/cropper/blob/master/LICENSE
-    gpl-compatible: true
-  js:
-    /libraries/cropper/dist/cropper.min.js: {}
-  css:
-    component:
-      /libraries/cropper/dist/cropper.min.css: {}
+  dependencies:
+    - core/jquery
+
 cropper.integration:
   version: 1.0
   js:
-    js/cropper.integration.js: {}
+    js/imageWidgetCrop.js: {}
+  css:
+    theme:
+      css/image_widget_crop.css: {}
   dependencies:
     - core/jquery
     - core/drupal
