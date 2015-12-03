@@ -131,8 +131,8 @@ class ImageCropWidget extends ImageWidget {
 
     $element['#theme'] = 'image_widget';
     $element['#attached']['library'][] = 'image/form';
-    $element['#attached']['library'][] = 'image_widget_crop/drupal.image_widget_crop.admin';
-    $element['#attached']['library'][] = 'image_widget_crop/drupal.image_widget_crop.upload.admin';
+    $element['#attached']['library'][] = 'image_widget_crop/cropper';
+    $element['#attached']['library'][] = 'image_widget_crop/cropper.integration';
 
     // Add the image preview.
     if (!empty($element['#files']) && $element['#preview_image_style']) {
@@ -141,7 +141,8 @@ class ImageCropWidget extends ImageWidget {
       // Verify if user have uploaded an image.
       self::getFileImageVariables($element, $variables);
 
-      $list_id = 'list';
+      //@TODO: $element['#delta'] is not unique. We need to find something unique.
+      $list_id = 'crop_list_' . $element['#field_name'] . '_' . $element['#delta'];
       // Standardize the name of wrapper elements.
       $element_wrapper_name = 'crop_container';
 
@@ -170,7 +171,8 @@ class ImageCropWidget extends ImageWidget {
             $thumb_properties = [];
             // Add compatibility to PHP 5.3.
             $has_ratio = $crop_type->getAspectRatio();
-            $ratio = !empty($has_ratio) ? $has_ratio : t('None');
+            $ratio = !empty($has_ratio) ? $has_ratio : t('NaN');
+            $ratio = str_replace(':', '/', $ratio);
 
             $container[$crop_type_id] = [
               '#type' => 'details',
