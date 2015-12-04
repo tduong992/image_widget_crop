@@ -136,6 +136,19 @@ function image_widget_crop_libraries_info() {
       ),
     ),
   );
+
+  $libraries = array(
+    'cropper.integration' => array(
+      'files' => array(
+        'js' => array(
+          'js/imageWidgetCrop.js' => array(),
+        ),
+        'css' => array(
+          'css/image_widget_crop.css' => array(),
+        ),
+      ),
+    ),
+  );
   return $libraries;
 }
 

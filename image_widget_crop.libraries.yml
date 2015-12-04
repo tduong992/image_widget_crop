@@ -1,15 +1,14 @@
 cropper:
   title: 'Cropper'
+  js: {}
+  css: {}
   dependencies:
     - core/jquery
 
 cropper.integration:
   version: 1.0
-  js:
-    js/imageWidgetCrop.js: {}
-  css:
-    theme:
-      css/image_widget_crop.css: {}
+  js: {}
+  css: {}
   dependencies:
     - core/jquery
     - core/drupal
