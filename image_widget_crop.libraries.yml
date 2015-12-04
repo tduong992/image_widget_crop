@@ -1,5 +1,7 @@
 cropper:
   title: 'Cropper'
+  js: {}
+  css: {}
   dependencies:
     - core/jquery
 
@@ -15,4 +17,3 @@ cropper.integration:
     - core/drupal
     - core/drupalSettings
     - image_widget_crop/cropper
-

@@ -207,6 +207,7 @@ class ImageWidgetCrop {
    *   The data dimensions (width & height) into this ImageStyle.
    */
   public function getCropOriginalDimension($original_height, array $properties) {
+    //@TODO: $properties['thumb-h'] should be calculated here. It also prevents crops being saved the first time since this is not set.
     $delta = $original_height / $properties['thumb-h'];
 
     // Get Center coordinate of crop zone.
@@ -214,7 +215,6 @@ class ImageWidgetCrop {
       ['x' => $properties['x'], 'y' => $properties['y']],
       ['width' => $properties['width'], 'height' => $properties['height']]
     );
-
 
     // Calculate coordinates (position & sizes) of crop zone.
     $crop_coordinates = $this->getCoordinates([

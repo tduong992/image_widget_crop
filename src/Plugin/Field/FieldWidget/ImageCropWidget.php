@@ -123,6 +123,23 @@ class ImageCropWidget extends ImageWidget {
     $route_params = \Drupal::requestStack()
       ->getCurrentRequest()->attributes->get('_route_params');
 
+    // Display an error message if the local/remote library and CSS are not set.
+    // @TODO Find a better solution to display the error message.
+    $config = \Drupal::config('image_widget_crop.settings');
+    $js_library = $config->get('settings.library_url');
+    $css_library = $config->get('settings.css_url');
+    if (!\Drupal::moduleHandler()->moduleExists('libraries')) {
+      if ((empty($js_library) || empty($css_library)) || (empty($js_library) && empty($css_library))) {
+        $element['message'] = array(
+          '#type' => 'container',
+          '#markup' => t('Either set the library locally (in /libraries/cropper) and enable the libraries module or enter the remote URL on <a href="/admin/config/media/crop-widget">Image Crop Widget settings</a>.'),
+          '#attributes' => array(
+          'class' => array('messages messages--error'),
+          ),
+        );
+      }
+    }
+
     if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {
       $edit = TRUE;
       /** @var \Drupal\crop\CropStorage $crop_storage */
@@ -131,7 +148,6 @@ class ImageCropWidget extends ImageWidget {
 
     $element['#theme'] = 'image_widget';
     $element['#attached']['library'][] = 'image/form';
-    $element['#attached']['library'][] = 'image_widget_crop/cropper';
     $element['#attached']['library'][] = 'image_widget_crop/cropper.integration';
 
     // Add the image preview.
@@ -148,7 +164,8 @@ class ImageCropWidget extends ImageWidget {
 
       // We need to wrap all elements to identify the widget elements.
       $element['crop_preview_wrapper'] = [
-        '#type' => 'container',
+        '#type' => 'details',
+        '#title' => t('Crop image'),
         '#attributes' => ['class' => ['crop-wrapper']],
         '#weight' => 100
       ];
@@ -195,6 +212,27 @@ class ImageCropWidget extends ImageWidget {
               '#weight' => -10,
             ];
 
+            $container[$crop_type_id][$element_wrapper_name]['reset'] = [
+              '#type' => 'button',
+              '#value' => t('Reset crop'),
+              '#attributes' => ['class' => ['crop-reset']],
+              '#weight' => -10,
+            ];
+
+            // Generation of html List with image & crop informations.
+            $container[$crop_type_id][$element_wrapper_name]['values'] = [
+              '#type' => 'container',
+              '#attributes' => ['class' => ['crop-preview-wrapper-value']],
+              '#weight' => -9,
+            ];
+
+            // Provide a form element to track whether cropping is applied or not.
+            $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied'] = [
+              '#type' => 'hidden',
+              '#attributes' => ['class' => ["crop-applied"]],
+              '#value' => 0,
+            ];
+
             if ($edit && !empty($crop_storage)) {
               $crops = $crop_storage->loadByProperties(['type' => $crop_type_id, 'uri' => $variables['uri']]);
               if (!empty($crops)) {
@@ -209,15 +247,11 @@ class ImageCropWidget extends ImageWidget {
                 }
 
                 $thumb_properties = self::getThumbnailCropProperties($image, $crop_properties);
+
+                // Provide a form element to track whether cropping is applied or not.
+                $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied']['#value'] = 1;
               }
             }
-
-            // Generation of html List with image & crop informations.
-            $container[$crop_type_id][$element_wrapper_name]['values'] = [
-              '#type' => 'container',
-              '#attributes' => ['class' => ['crop-preview-wrapper-value']],
-              '#weight' => -9,
-            ];
 
             self::getCropFormElement($element, $element_wrapper_name, $thumb_properties, $edit, $crop_type_id);
 
@@ -382,7 +416,7 @@ class ImageCropWidget extends ImageWidget {
    *   An array of values for the contained properties of image_crop widget.
    *
    * @return array<double>
-   *   All properties (x1, x2, y1, y2, crop height, crop width,
+   *   All properties (x, y, crop height, crop width,
    *   thumbnail height, thumbnail width), to apply the real crop
    *   into thumbnail preview.
    */

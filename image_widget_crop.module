@@ -66,27 +66,37 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
               return;
             }
 
+            // Get all imagesStyle used this crop_type.
+            $image_styles = $crop->getImageStylesByCrop($crop_type_name);
+
+            if (!empty($image_styles)) {
+              $crops = $crop->loadImageStyleByCrop($image_styles, $crop_type[$crop_type_name], $crop_element['file-uri']);
+            }
+            
             // If this crop is availables to create an crop entity.
-            if (($entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
-              // Get crop type for current cropType.
-              if (!isset($crop_type) && empty($crop_type)) {
-                drupal_set_message(t("The type of crop does not exist, please check the configuration of the CropType ('@cropType')", ['@cropType' => $crop_type->label()]), 'error');
-                return;
+            if (!count($crops)) {
+              if($properties['values']['crop_applied'] == '1' && isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
+                // Get crop type for current cropType.
+                if (!isset($crop_type) && empty($crop_type)) {
+                  drupal_set_message(t("The type of crop does not exist, please check the configuration of the CropType ('@cropType')", ['@cropType' => $crop_type->label()]), 'error');
+                  return;
+                }
+
+                $crop->applyCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
               }
-
-              $crop->applyCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
             }
 
-            // If the entity already exist & is not deleted by,
-            // user update $crop_type_name crop entity.
-            if ((!$entity->isNew()) && isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
-              $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
+            else {
+              // If the entity already exist & is not deleted by,
+              // user update $crop_type_name crop entity.
+              // If you need to delete existing crop when you edit this entity.
+              if ($properties['values']['crop_applied'] == '0') {
+                $crop->deleteCrop($crop_element['file-uri'], $crop_type[$crop_type_name], $crop_element['file-id']);
+              }
+              else if (isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
+                $crop->updateCrop($properties['values'], $crop_element, $crop_type[$crop_type_name]);
+              }
             }
-
-            // If you need to delete existing crop when you edit this entity.
-            /*if (!$entity->isNew() && $properties['values']['delete-crop'] == '1') {
-              $crop->deleteCrop($crop_element['file-uri'], $crop_type[$crop_type_name], $crop_element['file-id']);
-            }*/
           }
         }
       }
@@ -147,10 +157,14 @@ function image_widget_crop_library_info_alter(&$libraries, $extension) {
     return;
   }
 
+  $config = \Drupal::config('image_widget_crop.settings');
+  if (!\Drupal::moduleHandler()->moduleExists('libraries') && !$config->get('settings.library_url') && !$config->get('settings.css_url')) {
+    $libraries['cropper.integration']['js'] = array();
+  }
+
   // Get the correct path of the Cropper js file (the user needs to manually
   // put the jquery.cropper.min.js in libraries/cropper folder or set the url
   // in the settings).
-  $config = \Drupal::config('image_widget_crop.settings');
   if ($library_url = $config->get('settings.library_url')) {
     // Cloud hosted library, use external JavaScript.
     $libraries['cropper']['js'][$library_url] = array(
@@ -181,6 +195,8 @@ function image_widget_crop_library_info_alter(&$libraries, $extension) {
     }
   }
 
+
+  // Add the local CSS to the libraries.
   if ($css_url = $config->get('settings.css_url')) {
     // Cloud hosted library, use external CSS.
     $libraries['cropper']['css']['component'][$css_url] = array(

@@ -1,8 +1,11 @@
-.cropper-container {
-    /*border: 2px double #000;*/
+.crop-wrapper .image-style-crop-thumbnail {
+
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 1em;
 }
 
-.cropper-point {
-   /* width: 10px;
-    height: 10px;*/
+.crop-wrapper .crop-reset {
+    margin-top: 1em;
 }
