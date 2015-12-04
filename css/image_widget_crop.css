@@ -1,5 +1,11 @@
-.image-style-crop-thumbnail {
+.crop-wrapper .image-style-crop-thumbnail {
+
     display: block;
     width: 100%;
     height: auto;
+    margin-bottom: 1em;
+}
+
+.crop-wrapper .crop-reset {
+    margin-top: 1em;
 }
