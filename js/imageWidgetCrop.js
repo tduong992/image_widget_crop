@@ -45,8 +45,7 @@
       zoomable: false,
       viewMode: 3,
       autoCropArea: 1,
-      crop: function (e) {
-        // @TODO: set the values dor the input elements.
+      cropend: function (e) {
         var values = $element.siblings('.crop-preview-wrapper-value');
         values.find('.crop-x').val(e.x);
         values.find('.crop-y').val(e.y);
