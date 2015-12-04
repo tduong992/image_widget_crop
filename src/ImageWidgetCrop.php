@@ -215,7 +215,6 @@ class ImageWidgetCrop {
       ['width' => $properties['width'], 'height' => $properties['height']]
     );
 
-
     // Calculate coordinates (position & sizes) of crop zone.
     $crop_coordinates = $this->getCoordinates([
       'width' => $properties['width'],

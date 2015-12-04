@@ -41,6 +41,21 @@
    *   The ratio of the image
    */
   Drupal.imageWidgetCrop.initializeCropper = function ($element, ratio) {
+    var data = null;
+    var $values = $element.siblings('.crop-preview-wrapper-value');
+
+    if (parseInt($values.find('.crop-applied').val()) === 1) {
+      data = {
+        x: parseInt($values.find('.crop-x').val()),
+        y: parseInt($values.find('.crop-y').val()),
+        width: parseInt($values.find('.crop-width').val()),
+        height: parseInt($values.find('.crop-height').val()),
+        rotate: 0,
+        scaleX: 1,
+        scaleY: 1
+      };
+    }
+
     $element.cropper({
       // @TODO: This is evil.
       aspectRatio: eval(ratio),
@@ -48,12 +63,14 @@
       zoomable: false,
       viewMode: 3,
       autoCropArea: 1,
+      data: data,
       cropend: function (e) {
-        var values = $element.siblings('.crop-preview-wrapper-value');
-        values.find('.crop-x').val(e.x);
-        values.find('.crop-y').val(e.y);
-        values.find('.crop-width').val(e.width);
-        values.find('.crop-height').val(e.height);
+        var data = $(this).cropper('getData');
+        $values.find('.crop-x').val(data.x);
+        $values.find('.crop-y').val(data.y);
+        $values.find('.crop-width').val(data.width);
+        $values.find('.crop-height').val(data.height);
+        $values.find('.crop-applied').val(1);
       }
     });
   };

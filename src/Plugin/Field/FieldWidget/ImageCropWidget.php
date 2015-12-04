@@ -195,6 +195,20 @@ class ImageCropWidget extends ImageWidget {
               '#weight' => -10,
             ];
 
+            // Generation of html List with image & crop informations.
+            $container[$crop_type_id][$element_wrapper_name]['values'] = [
+              '#type' => 'container',
+              '#attributes' => ['class' => ['crop-preview-wrapper-value']],
+              '#weight' => -9,
+            ];
+
+            // Provide a form element to track whether cropping is applied or not.
+            $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied'] = [
+              '#type' => 'hidden',
+              '#attributes' => ['class' => ["crop-applied"]],
+              '#value' => 0,
+            ];
+
             if ($edit && !empty($crop_storage)) {
               $crops = $crop_storage->loadByProperties(['type' => $crop_type_id, 'uri' => $variables['uri']]);
               if (!empty($crops)) {
@@ -209,15 +223,11 @@ class ImageCropWidget extends ImageWidget {
                 }
 
                 $thumb_properties = self::getThumbnailCropProperties($image, $crop_properties);
+
+                // Provide a form element to track whether cropping is applied or not.
+                $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied']['#value'] = 1;
               }
             }
-
-            // Generation of html List with image & crop informations.
-            $container[$crop_type_id][$element_wrapper_name]['values'] = [
-              '#type' => 'container',
-              '#attributes' => ['class' => ['crop-preview-wrapper-value']],
-              '#weight' => -9,
-            ];
 
             self::getCropFormElement($element, $element_wrapper_name, $thumb_properties, $edit, $crop_type_id);
 
@@ -382,7 +392,7 @@ class ImageCropWidget extends ImageWidget {
    *   An array of values for the contained properties of image_crop widget.
    *
    * @return array<double>
-   *   All properties (x1, x2, y1, y2, crop height, crop width,
+   *   All properties (x, y, crop height, crop width,
    *   thumbnail height, thumbnail width), to apply the real crop
    *   into thumbnail preview.
    */
