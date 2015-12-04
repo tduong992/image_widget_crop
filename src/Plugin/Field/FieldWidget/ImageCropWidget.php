@@ -144,7 +144,6 @@ class ImageCropWidget extends ImageWidget {
 
     $element['#theme'] = 'image_widget';
     $element['#attached']['library'][] = 'image/form';
-    $element['#attached']['library'][] = 'image_widget_crop/cropper';
     $element['#attached']['library'][] = 'image_widget_crop/cropper.integration';
 
     // Add the image preview.

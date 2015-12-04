@@ -7,11 +7,13 @@ cropper:
 
 cropper.integration:
   version: 1.0
-  js: {}
-  css: {}
+  js:
+    js/imageWidgetCrop.js: {}
+  css:
+    theme:
+      css/image_widget_crop.css: {}
   dependencies:
     - core/jquery
     - core/drupal
     - core/drupalSettings
     - image_widget_crop/cropper
-
