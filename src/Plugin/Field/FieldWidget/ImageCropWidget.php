@@ -128,14 +128,16 @@ class ImageCropWidget extends ImageWidget {
     $config = \Drupal::config('image_widget_crop.settings');
     $js_library = $config->get('settings.library_url');
     $css_library = $config->get('settings.css_url');
-    if (!\Drupal::moduleHandler()->moduleExists('libraries') && ((!empty($js_library) || !empty($css_library)) || (!empty($js_library) && !empty($css_library)))) {
-      $element['message'] = array(
-        '#type' => 'container',
-        '#markup' => t('Either set the library locally (in /libraries/cropper) and enable the libraries module or enter the remote URL on <a href="/admin/config/media/crop-widget">Image Crop Widget settings</a>.'),
-        '#attributes' => array(
+    if (!\Drupal::moduleHandler()->moduleExists('libraries')) {
+      if ((empty($js_library) || empty($css_library)) || (empty($js_library) && empty($css_library))) {
+        $element['message'] = array(
+          '#type' => 'container',
+          '#markup' => t('Either set the library locally (in /libraries/cropper) and enable the libraries module or enter the remote URL on <a href="/admin/config/media/crop-widget">Image Crop Widget settings</a>.'),
+          '#attributes' => array(
           'class' => array('messages messages--error'),
-        ),
-      );
+          ),
+        );
+      }
     }
 
     if (isset($route_params['_entity_form']) && preg_match('/.edit/', $route_params['_entity_form'])) {
