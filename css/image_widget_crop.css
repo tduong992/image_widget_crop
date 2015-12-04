@@ -1,8 +1,5 @@
-.cropper-container {
-    /*border: 2px double #000;*/
-}
-
-.cropper-point {
-   /* width: 10px;
-    height: 10px;*/
+.image-style-crop-thumbnail {
+    display: block;
+    width: 100%;
+    height: auto;
 }
