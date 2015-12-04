@@ -114,6 +114,9 @@ class CropWidgetForm extends ConfigFormBase {
       }
     }
     else {
+      if (empty($form_state->getValue('library_url')) || empty($form_state->getValue('css_url'))) {
+        $form_state->setErrorByName('plugin', t('Either set the library and CSS locally (in /libraries/cropper) and enable the libraries module or enter the remote URLs below.'));
+      }
       $cropper_cdn_url = 'https://cdnjs.com/libraries/cropper';
       if (!empty($form_state->getValue('library_url'))) {
         // Check if the name of the library in the remote URL is as expected.
@@ -141,10 +144,6 @@ class CropWidgetForm extends ConfigFormBase {
           $form_state->setErrorByName('plugin', t('The remote URL for the CSS file is unexpected. Please, provide the correct URL to the minimized version of the CSS file found on <a href="@url">Cropper CDN</a>.', ['@url' => $cropper_cdn_url]), 'error');
         }
       }
-    }
-
-    if ((empty($this->settings->get('settings.library_url')) && empty($form_state->getValue('library_url'))) || (empty($this->settings->get('settings.css_url')) && empty($form_state->getValue('css_url')))){
-      $form_state->setErrorByName('plugin', t('Either set the library and CSS locally (in /libraries/cropper) and enable the libraries module or enter the remote URLs below.'));
     }
   }
 

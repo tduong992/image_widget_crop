@@ -126,7 +126,9 @@ class ImageCropWidget extends ImageWidget {
     // Display an error message if the local/remote library and CSS are not set.
     // @TODO Find a better solution to display the error message.
     $config = \Drupal::config('image_widget_crop.settings');
-    if (!\Drupal::moduleHandler()->moduleExists('libraries') && !$config->get('settings.library_url') && !$config->get('settings.css_url')) {
+    $js_library = $config->get('settings.library_url');
+    $css_library = $config->get('settings.css_url');
+    if (!\Drupal::moduleHandler()->moduleExists('libraries') && ((!empty($js_library) || !empty($css_library)) || (!empty($js_library) && !empty($css_library)))) {
       $element['message'] = array(
         '#type' => 'container',
         '#markup' => t('Either set the library locally (in /libraries/cropper) and enable the libraries module or enter the remote URL on <a href="/admin/config/media/crop-widget">Image Crop Widget settings</a>.'),
