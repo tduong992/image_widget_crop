@@ -212,6 +212,13 @@ class ImageCropWidget extends ImageWidget {
               '#weight' => -10,
             ];
 
+            $container[$crop_type_id][$element_wrapper_name]['reset'] = [
+              '#type' => 'button',
+              '#value' => t('Reset crop'),
+              '#attributes' => ['class' => ['crop-reset']],
+              '#weight' => -10,
+            ];
+
             // Generation of html List with image & crop informations.
             $container[$crop_type_id][$element_wrapper_name]['values'] = [
               '#type' => 'container',

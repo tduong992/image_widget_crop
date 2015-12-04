@@ -12,6 +12,7 @@
   var cropWrapperSelector = '.crop-wrapper';
   var verticalTabsSelector = '.vertical-tabs';
   var verticalTabsMenuItemSelector = '.vertical-tabs__menu-item';
+  var resetSelector = '.crop-reset';
 
   Drupal.imageWidgetCrop = {};
 
@@ -25,6 +26,7 @@
     var $cropWrapper = $(cropWrapperSelector, context);
     var $verticalTabs = $(verticalTabsSelector, context);
     var $verticalTabsMenuItem = $verticalTabs.find(verticalTabsMenuItemSelector);
+    var $reset = $(resetSelector, context);
 
     // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround. Additionally it also fires when hiding and on page load
     $cropWrapper.on('toggle', function () {
@@ -39,6 +41,13 @@
       var tabId = $(this).find('a').attr('href');
       var $cropper = $(tabId).find(cropperSelector);
       Drupal.imageWidgetCrop.initializeCropper($cropper, $cropper.data('ratio'));
+    });
+
+    $reset.on('click', function (e) {
+      e.preventDefault();
+      var $element = $(this).siblings(cropperSelector);
+      Drupal.imageWidgetCrop.reset($element);
+      return false;
     });
   };
 
@@ -129,10 +138,26 @@
     });
   };
 
+  /**
+   * Reset cropping for an element
+   *
+   * @param $element
+   *   The element to reset cropping on.
+   */
+  Drupal.imageWidgetCrop.reset = function ($element) {
+    var $values = $element.siblings(cropperValuesSelector);
+    $element.cropper('reset');
+    $values.find('.crop-x').val('');
+    $values.find('.crop-y').val('');
+    $values.find('.crop-width').val('');
+    $values.find('.crop-height').val('');
+    $values.find('.crop-applied').val(0);
+    Drupal.imageWidgetCrop.updateCropSummaries($element);
+  };
+
   Drupal.behaviors.imageWidgetCrop = {
     attach: function (context) {
       Drupal.imageWidgetCrop.initialize(context);
-
     }
   };
 
