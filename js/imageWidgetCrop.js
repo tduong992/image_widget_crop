@@ -7,6 +7,12 @@
 (function ($, Drupal, drupalSettings) {
   'use strict';
 
+  var cropperSelector = '.image-style-crop-thumbnail';
+  var cropperValuesSelector = '.crop-preview-wrapper-value';
+  var cropWrapperSelector = '.crop-wrapper';
+  var verticalTabsSelector = '.vertical-tabs';
+  var verticalTabsMenuItemSelector = '.vertical-tabs__menu-item';
+
   Drupal.imageWidgetCrop = {};
 
   /**
@@ -16,15 +22,19 @@
    *   Element to initialize cropper on.
    */
   Drupal.imageWidgetCrop.initialize = function (context) {
-    var cropperSelector = '.image-style-crop-thumbnail';
-    var $verticalTabs = $('.vertical-tabs', context);
-    var $verticalTabsMenuItem = $verticalTabs.find('.vertical-tabs__menu-item');
+    var $cropWrapper = $(cropWrapperSelector, context);
+    var $verticalTabs = $(verticalTabsSelector, context);
+    var $verticalTabsMenuItem = $verticalTabs.find(verticalTabsMenuItemSelector);
 
-    var visibleCroppers = $verticalTabs.find('.vertical-tabs__pane:first-child').find(cropperSelector);
-    visibleCroppers.each(function () {
-      Drupal.imageWidgetCrop.initializeCropper($(this), $(this).data('ratio'));
+    // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround. Additionally it also fires when hiding and on page load
+    $cropWrapper.on('toggle', function () {
+      var $this = $(this);
+      setTimeout(function () {
+        Drupal.imageWidgetCrop.initializeCropperOnChildren($this);
+      }, 10);
     });
 
+    // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround.
     $verticalTabsMenuItem.click(function () {
       var tabId = $(this).find('a').attr('href');
       var $cropper = $(tabId).find(cropperSelector);
@@ -42,7 +52,7 @@
    */
   Drupal.imageWidgetCrop.initializeCropper = function ($element, ratio) {
     var data = null;
-    var $values = $element.siblings('.crop-preview-wrapper-value');
+    var $values = $element.siblings(cropperValuesSelector);
 
     if (parseInt($values.find('.crop-applied').val()) === 1) {
       data = {
@@ -71,14 +81,61 @@
         $values.find('.crop-width').val(data.width);
         $values.find('.crop-height').val(data.height);
         $values.find('.crop-applied').val(1);
+        Drupal.imageWidgetCrop.updateCropSummaries($element);
       }
+    });
+  };
+
+  /**
+   * Initialize cropper on all children of an element.
+   *
+   * @param $element
+   *   Element to initialize cropper on its children.
+   */
+  Drupal.imageWidgetCrop.initializeCropperOnChildren = function ($element) {
+    var visibleCropper = $element.find(cropperSelector + ':visible');
+    Drupal.imageWidgetCrop.initializeCropper($(visibleCropper), $(visibleCropper).data('ratio'));
+  };
+
+  /**
+   * Update crop summaries after cropping cas been set or reset.
+   *
+   * @param $element
+   *   The element cropping on which has been changed
+   */
+  Drupal.imageWidgetCrop.updateCropSummaries = function ($element) {
+    var $values = $element.siblings(cropperValuesSelector);
+    var croppingApplied = parseInt($values.find('.crop-applied').val());
+    var wrapperText = Drupal.t('Crop image');
+    var summaryText = Drupal.t('No cropping applied');
+    if (croppingApplied) {
+      wrapperText = Drupal.t('Crop image (cropping applied)');
+      summaryText = Drupal.t('Cropping applied');
+    }
+    $element.parents(cropWrapperSelector).children('summary').text(wrapperText);
+
+    $element.closest('details').drupalSetSummary(function (context) {
+      return summaryText;
+    });
+  };
+
+  /**
+   * Update crop summaries after cropping cas been set or reset.
+   */
+  Drupal.imageWidgetCrop.updateAllCropSummaries = function () {
+    var $elements = $(cropperSelector);
+    $elements.each(function () {
+      Drupal.imageWidgetCrop.updateCropSummaries($(this));
     });
   };
 
   Drupal.behaviors.imageWidgetCrop = {
     attach: function (context) {
       Drupal.imageWidgetCrop.initialize(context);
+
     }
   };
+
+  Drupal.imageWidgetCrop.updateAllCropSummaries();
 
 }(jQuery, Drupal, drupalSettings));
