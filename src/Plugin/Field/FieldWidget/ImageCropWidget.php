@@ -161,7 +161,8 @@ class ImageCropWidget extends ImageWidget {
 
       // We need to wrap all elements to identify the widget elements.
       $element['crop_preview_wrapper'] = [
-        '#type' => 'container',
+        '#type' => 'details',
+        '#title' => t('Crop image (No cropping set)'),
         '#attributes' => ['class' => ['crop-wrapper']],
         '#weight' => 100
       ];
