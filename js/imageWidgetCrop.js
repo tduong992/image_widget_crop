@@ -1,5 +1,5 @@
 /**
- * @file cropper.integration.js
+ * @file imageWidgetCrop.js
  *
  * Defines the behaviors needed for cropper integration.
  *
@@ -10,7 +10,10 @@
   Drupal.imageWidgetCrop = {};
 
   /**
-   * Initialize the cropper
+   * Initialize cropper on the ImageWidgetCrop widget.
+   *
+   * @param context
+   *   Element to initialize cropper on.
    */
   Drupal.imageWidgetCrop.initialize = function (context) {
     var cropperSelector = '.image-style-crop-thumbnail';
@@ -30,9 +33,9 @@
   };
 
   /**
-   * Reacts on 'entities selected' event.
+   * Initialize cropper on an element.
    *
-   * @param element
+   * @param $element
    *   Element to initialize cropper on.
    * @param ratio
    *   The ratio of the image
@@ -53,7 +56,7 @@
         values.find('.crop-height').val(e.height);
       }
     });
-  }
+  };
 
   Drupal.behaviors.imageWidgetCrop = {
     attach: function (context) {
