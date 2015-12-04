@@ -66,9 +66,16 @@ function image_widget_crop_entity_presave(Drupal\Core\Entity\EntityInterface $en
               return;
             }
 
+            // Get all imagesStyle used this crop_type.
+            $image_styles = $crop->getImageStylesByCrop($crop_type_name);
+
+            if (!empty($image_styles)) {
+              $crops = $crop->loadImageStyleByCrop($image_styles, $crop_type[$crop_type_name], $crop_element['file-uri']);
+            }
+            
             // If this crop is availables to create an crop entity.
-            if ($entity->isNew()) {
-              if($properties['values']['crop_applied'] == '1' && isset($properties['values']) && (!empty($properties['values']['crop-w']) && !empty($properties['values']['crop-h']))) {
+            if (!count($crops)) {
+              if($properties['values']['crop_applied'] == '1' && isset($properties['values']) && (!empty($properties['values']['width']) && !empty($properties['values']['height']))) {
                 // Get crop type for current cropType.
                 if (!isset($crop_type) && empty($crop_type)) {
                   drupal_set_message(t("The type of crop does not exist, please check the configuration of the CropType ('@cropType')", ['@cropType' => $crop_type->label()]), 'error');
