@@ -10,9 +10,27 @@
   var cropperSelector = '.image-style-crop-thumbnail';
   var cropperValuesSelector = '.crop-preview-wrapper-value';
   var cropWrapperSelector = '.crop-wrapper';
+  var cropWrapperSummarySelector = 'summary';
   var verticalTabsSelector = '.vertical-tabs';
   var verticalTabsMenuItemSelector = '.vertical-tabs__menu-item';
   var resetSelector = '.crop-reset';
+  var cropperOptions = {
+    background: false,
+    zoomable: false,
+    viewMode: 3,
+    autoCropArea: 1,
+    cropend: function (e) {
+      var $this = $(this);
+      var $values = $this.siblings(cropperValuesSelector);
+      var data = $this.cropper('getData');
+      $values.find('.crop-x').val(data.x);
+      $values.find('.crop-y').val(data.y);
+      $values.find('.crop-width').val(data.width);
+      $values.find('.crop-height').val(data.height);
+      $values.find('.crop-applied').val(1);
+      Drupal.imageWidgetCrop.updateCropSummaries($this);
+    }
+  };
 
   Drupal.imageWidgetCrop = {};
 
@@ -24,16 +42,19 @@
    */
   Drupal.imageWidgetCrop.initialize = function (context) {
     var $cropWrapper = $(cropWrapperSelector, context);
+    var $cropWrapperSummary = $cropWrapper.children(cropWrapperSummarySelector);
     var $verticalTabs = $(verticalTabsSelector, context);
     var $verticalTabsMenuItem = $verticalTabs.find(verticalTabsMenuItemSelector);
     var $reset = $(resetSelector, context);
 
+
     // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround. Additionally it also fires when hiding and on page load
-    $cropWrapper.on('toggle', function () {
-      var $this = $(this);
+    $cropWrapperSummary.bind('click', function (e) {
+      var $element = $(this).parents(cropWrapperSelector);
       setTimeout(function () {
-        Drupal.imageWidgetCrop.initializeCropperOnChildren($this);
+        Drupal.imageWidgetCrop.initializeCropperOnChildren($element);
       }, 10);
+      return true;
     });
 
     // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround.
@@ -62,6 +83,7 @@
   Drupal.imageWidgetCrop.initializeCropper = function ($element, ratio) {
     var data = null;
     var $values = $element.siblings(cropperValuesSelector);
+    var options = cropperOptions;
 
     if (parseInt($values.find('.crop-applied').val()) === 1) {
       data = {
@@ -75,24 +97,11 @@
       };
     }
 
-    $element.cropper({
-      // @TODO: This is evil.
-      aspectRatio: eval(ratio),
-      background: false,
-      zoomable: false,
-      viewMode: 3,
-      autoCropArea: 1,
-      data: data,
-      cropend: function (e) {
-        var data = $(this).cropper('getData');
-        $values.find('.crop-x').val(data.x);
-        $values.find('.crop-y').val(data.y);
-        $values.find('.crop-width').val(data.width);
-        $values.find('.crop-height').val(data.height);
-        $values.find('.crop-applied').val(1);
-        Drupal.imageWidgetCrop.updateCropSummaries($element);
-      }
-    });
+    options.data = data;
+    // @TODO: eval() is evil.
+    options.aspectRatio = eval(ratio);
+
+    $element.cropper(cropperOptions);
   };
 
   /**
@@ -107,21 +116,18 @@
   };
 
   /**
-   * Update crop summaries after cropping cas been set or reset.
+   * Update single crop summary of an element
    *
    * @param $element
    *   The element cropping on which has been changed
    */
-  Drupal.imageWidgetCrop.updateCropSummaries = function ($element) {
+  Drupal.imageWidgetCrop.updateSingleCropSummary = function ($element) {
     var $values = $element.siblings(cropperValuesSelector);
     var croppingApplied = parseInt($values.find('.crop-applied').val());
-    var wrapperText = Drupal.t('Crop image');
     var summaryText = Drupal.t('No cropping applied');
     if (croppingApplied) {
-      wrapperText = Drupal.t('Crop image (cropping applied)');
       summaryText = Drupal.t('Cropping applied');
     }
-    $element.parents(cropWrapperSelector).children('summary').text(wrapperText);
 
     $element.closest('details').drupalSetSummary(function (context) {
       return summaryText;
@@ -129,12 +135,43 @@
   };
 
   /**
+   * Update common crop summary of an element
+   *
+   * @param $element
+   *   The element cropping on which has been changed
+   */
+  Drupal.imageWidgetCrop.updateCommonCropSummary = function ($element) {
+    var croppingApplied = parseInt($element.find('.crop-applied[value="1"]').length);
+    var wrapperText = Drupal.t('Crop image');
+    if (croppingApplied) {
+      wrapperText = Drupal.t('Crop image (cropping applied)');
+    }
+    $element.children('summary').text(wrapperText);
+  };
+
+  /**
    * Update crop summaries after cropping cas been set or reset.
+   *
+   * @param $element
+   *   The element cropping on which has been changed
+   */
+  Drupal.imageWidgetCrop.updateCropSummaries = function ($element) {
+    var $cropWrapper = $(cropWrapperSelector);
+    Drupal.imageWidgetCrop.updateSingleCropSummary($element);
+    Drupal.imageWidgetCrop.updateCommonCropSummary($cropWrapper);
+  };
+
+  /**
+   * Update crop summaries of all elements
    */
   Drupal.imageWidgetCrop.updateAllCropSummaries = function () {
-    var $elements = $(cropperSelector);
-    $elements.each(function () {
-      Drupal.imageWidgetCrop.updateCropSummaries($(this));
+    var $croppers = $(cropperSelector);
+    $croppers.each(function () {
+      Drupal.imageWidgetCrop.updateSingleCropSummary($(this));
+    });
+    var $cropWrappers = $(cropWrapperSelector);
+    $cropWrappers.each(function () {
+      Drupal.imageWidgetCrop.updateCommonCropSummary($(this));
     });
   };
 
@@ -146,7 +183,7 @@
    */
   Drupal.imageWidgetCrop.reset = function ($element) {
     var $values = $element.siblings(cropperValuesSelector);
-    $element.cropper('reset');
+    $element.cropper('reset').cropper('options', cropperOptions);
     $values.find('.crop-x').val('');
     $values.find('.crop-y').val('');
     $values.find('.crop-width').val('');
