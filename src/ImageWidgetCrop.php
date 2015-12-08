@@ -8,9 +8,11 @@
 namespace Drupal\image_widget_crop;
 
 use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Image\Image;
 use Drupal\crop\Entity\Crop;
 use Drupal\crop\Entity\CropType;
 use Drupal\image\Entity\ImageStyle;
+use Drupal\image_widget_crop\Plugin\Field\FieldWidget\ImageCropWidget;
 
 /**
  * ImageWidgetCrop calculation class.
@@ -63,7 +65,7 @@ class ImageWidgetCrop {
    */
   public function applyCrop(array $properties, $field_value, CropType $crop_type) {
     // Get Original sizes and position of crop zone.
-    $crop_properties = $this->getCropOriginalDimension($field_value['height'], $properties);
+    $crop_properties = $this->getCropOriginalDimension($field_value, $properties);
     // Get all imagesStyle used this crop_type.
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
 
@@ -83,7 +85,7 @@ class ImageWidgetCrop {
    */
   public function updateCrop(array $properties, $field_value, CropType $crop_type) {
     // Get Original sizes and position of crop zone.
-    $crop_properties = $this->getCropOriginalDimension($field_value['height'], $properties);
+    $crop_properties = $this->getCropOriginalDimension($field_value, $properties);
 
     // Get all imagesStyle used this crop_type.
     $image_styles = $this->getImageStylesByCrop($crop_type->id());
@@ -198,17 +200,21 @@ class ImageWidgetCrop {
   /**
    * Get the size and position of the crop.
    *
-   * @param int $original_height
-   *   The original height of image.
+   * @param array $field_values
+   *   The original values of image.
    * @param array $properties
    *   The original height of image.
    *
    * @return array<double>
    *   The data dimensions (width & height) into this ImageStyle.
    */
-  public function getCropOriginalDimension($original_height, array $properties) {
-    //@TODO: $properties['thumb-h'] should be calculated here. It also prevents crops being saved the first time since this is not set.
-    $delta = $original_height / $properties['thumb-h'];
+  public function getCropOriginalDimension(array $field_values, array $properties) {
+    /** @var \Drupal\Core\Image\Image $image */
+    $image = \Drupal::service('image.factory')->get($field_values['file-uri']);
+    if (!$image->isValid()) {
+      throw new \RuntimeException('This image file is nos valid');
+    }
+    $delta = $this->getThumbnailCalculatedProperties($image)['delta'];
 
     // Get Center coordinate of crop zone.
     $axis_coordinate = $this->getAxisCoordinates(
@@ -362,6 +368,55 @@ class ImageWidgetCrop {
     }
 
     return $crops;
+  }
+
+  /**
+   * Calculates the delta between the original image and the thumbnail use UI.
+   *
+   * @param Image $image
+   *   Image object to represent uploaded image file.
+   * @param string $preview
+   *   An array of values for the contained properties of image_crop widget.
+   *
+   * @return array<double>
+   *   The calculated properties between the original image and the thumbnail.
+   */
+  public static function getThumbnailCalculatedProperties(Image $image, $preview = 'crop_thumbnail') {
+    $image_styles = \Drupal::service('entity.manager')
+      ->getStorage('image_style')
+      ->loadByProperties(['status' => TRUE, 'name' => $preview]);
+
+    // Verify the configuration of ImageStyle and get the data width.
+    /** @var \Drupal\image\Entity\ImageStyle $image_style */
+    $image_style = $image_styles[$preview];
+    $effect = $image_style->getEffects()->getConfiguration();
+
+    $width = $image->getWidth();
+    $height = $image->getHeight();
+
+    // Get max Width of this imageStyle.
+    $thumbnail_width = $effect[array_keys($effect)[0]]['data']['width'];
+
+    if (!isset($thumbnail_width) || !is_int($thumbnail_width)) {
+      throw new \RuntimeException('Your crop preview ImageStyle not have "width", add it to have an correct preview.');
+    }
+
+    // Special case when the width of image is less,
+    // than maximum width of thumbnail.
+    if ($thumbnail_width > $width) {
+      $thumbnail_width = $width;
+    }
+
+    // Calculate Thumbnail height
+    // (Original Height x Thumbnail Width / Original Width = Thumbnail Height).
+    $thumbnail_height = round(($height * $thumbnail_width) / $width);
+
+    // Get the delta between Original Height divide by Thumbnail Height.
+    return [
+      'delta' => number_format($height / $thumbnail_height, 2, '.', ''),
+      'thumbnail_width' => $thumbnail_width,
+      'thumbnail_height' => $thumbnail_height
+    ];
   }
 
   /**

@@ -1,9 +1,8 @@
 /**
- * @file imageWidgetCrop.js
- *
+ * @file
  * Defines the behaviors needed for cropper integration.
- *
  */
+
 (function ($, Drupal, drupalSettings) {
   'use strict';
 
@@ -23,10 +22,10 @@
       var $this = $(this);
       var $values = $this.siblings(cropperValuesSelector);
       var data = $this.cropper('getData');
-      $values.find('.crop-x').val(data.x);
-      $values.find('.crop-y').val(data.y);
-      $values.find('.crop-width').val(data.width);
-      $values.find('.crop-height').val(data.height);
+      $values.find('.crop-x').val(Math.round(data.x));
+      $values.find('.crop-y').val(Math.round(data.y));
+      $values.find('.crop-width').val(Math.round(data.width));
+      $values.find('.crop-height').val(Math.round(data.height));
       $values.find('.crop-applied').val(1);
       Drupal.imageWidgetCrop.updateCropSummaries($this);
     }
@@ -46,7 +45,6 @@
     var $verticalTabs = $(verticalTabsSelector, context);
     var $verticalTabsMenuItem = $verticalTabs.find(verticalTabsMenuItemSelector);
     var $reset = $(resetSelector, context);
-
 
     // @TODO: This event fires too early. The cropper element is not visible yet. This is why we need the setTimeout() workaround. Additionally it also fires when hiding and on page load
     $cropWrapperSummary.bind('click', function (e) {
@@ -116,7 +114,7 @@
   };
 
   /**
-   * Update single crop summary of an element
+   * Update single crop summary of an element.
    *
    * @param $element
    *   The element cropping on which has been changed
@@ -135,7 +133,7 @@
   };
 
   /**
-   * Update common crop summary of an element
+   * Update common crop summary of an element.
    *
    * @param $element
    *   The element cropping on which has been changed
@@ -162,7 +160,7 @@
   };
 
   /**
-   * Update crop summaries of all elements
+   * Update crop summaries of all elements.
    */
   Drupal.imageWidgetCrop.updateAllCropSummaries = function () {
     var $croppers = $(cropperSelector);
@@ -176,7 +174,7 @@
   };
 
   /**
-   * Reset cropping for an element
+   * Reset cropping for an element.
    *
    * @param $element
    *   The element to reset cropping on.

@@ -12,6 +12,7 @@ use Drupal\Core\Config\Entity\ConfigEntityStorage;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Image\Image;
 use Drupal\Core\Render\ElementInfoManagerInterface;
 use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
 use Drupal\image_widget_crop\ImageWidgetCrop;
@@ -134,7 +135,7 @@ class ImageCropWidget extends ImageWidget {
           '#type' => 'container',
           '#markup' => t('Either set the library locally (in /libraries/cropper) and enable the libraries module or enter the remote URL on <a href="/admin/config/media/crop-widget">Image Crop Widget settings</a>.'),
           '#attributes' => array(
-          'class' => array('messages messages--error'),
+            'class' => array('messages messages--error'),
           ),
         );
       }
@@ -157,7 +158,7 @@ class ImageCropWidget extends ImageWidget {
       // Verify if user have uploaded an image.
       self::getFileImageVariables($element, $variables);
 
-      //@TODO: $element['#delta'] is not unique. We need to find something unique.
+      // @TODO: $element['#delta'] is not unique. We need to find something unique.
       $list_id = 'crop_list_' . $element['#field_name'] . '_' . $element['#delta'];
       // Standardize the name of wrapper elements.
       $element_wrapper_name = 'crop_container';
@@ -226,7 +227,7 @@ class ImageCropWidget extends ImageWidget {
               '#weight' => -9,
             ];
 
-            // Provide a form element to track whether cropping is applied or not.
+            // Element to track whether cropping is applied or not.
             $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied'] = [
               '#type' => 'hidden',
               '#attributes' => ['class' => ["crop-applied"]],
@@ -248,7 +249,7 @@ class ImageCropWidget extends ImageWidget {
 
                 $thumb_properties = self::getThumbnailCropProperties($image, $crop_properties);
 
-                // Provide a form element to track whether cropping is applied or not.
+                // Element to track whether cropping is applied or not.
                 $container[$crop_type_id][$element_wrapper_name]['values']['crop_applied']['#value'] = 1;
               }
             }
@@ -407,7 +408,7 @@ class ImageCropWidget extends ImageWidget {
   /**
    * Calculate properties of thumbnail preview.
    *
-   * @param \Drupal\Core\Image\Image $image
+   * @param Image $image
    *   Image object to represent uploaded image file.
    * @param array $original_crop
    *   All properties returned by the crop plugin (js),
@@ -420,40 +421,15 @@ class ImageCropWidget extends ImageWidget {
    *   thumbnail height, thumbnail width), to apply the real crop
    *   into thumbnail preview.
    */
-  public static function getThumbnailCropProperties($image, array $original_crop, $preview = 'crop_thumbnail') {
+  public static function getThumbnailCropProperties(Image $image, array $original_crop, $preview = 'crop_thumbnail') {
     $crop_thumbnail = [];
 
-    $image_styles = \Drupal::service('entity.manager')
-      ->getStorage('image_style')
-      ->loadByProperties(['status' => TRUE, 'name' => $preview]);
-
-    // Verify the configuration of ImageStyle and get the data width.
-    /** @var \Drupal\image\Entity\ImageStyle $image_style */
-    $image_style = $image_styles[$preview];
-    $effect = $image_style->getEffects()->getConfiguration();
-
-    $width = $image->getWidth();
-    $height = $image->getHeight();
-
-    // Get max Width of this imageStyle.
-    $thumbnail_width = $effect[array_keys($effect)[0]]['data']['width'];
-
-    if (!isset($thumbnail_width) || !is_int($thumbnail_width)) {
-      throw new \RuntimeException('Your crop preview ImageStyle not have "width", add it to have an correct preview.');
+    $thumbnail_properties = ImageWidgetCrop::getThumbnailCalculatedProperties($image, $preview);
+    if (!isset($thumbnail_properties) || empty($thumbnail_properties)) {
+      throw new \RuntimeException('Impossible to retrives thumbnail properties');
     }
 
-    // Special case when the width of image is less,
-    // than maximum width of thumbnail.
-    if ($thumbnail_width > $width) {
-      $thumbnail_width = $width;
-    }
-
-    // Calculate Thumbnail height
-    // (Original Height x Thumbnail Width / Original Width = Thumbnail Height).
-    $thumbnail_height = round(($height * $thumbnail_width) / $width);
-
-    // Get the delta between Original Height divide by Thumbnail Height.
-    $delta = number_format($height / $thumbnail_height, 2, '.', '');
+    $delta = $thumbnail_properties['delta'];
 
     // Get the Crop selection Size (into Uploaded image) &,
     // calculate selection for Thumbnail.
@@ -462,8 +438,8 @@ class ImageCropWidget extends ImageWidget {
 
     // Calculate the Top-Left corner for Thumbnail.
     // Get the real thumbnail sizes.
-    $crop_thumbnail['thumb-w'] = $thumbnail_width;
-    $crop_thumbnail['thumb-h'] = $thumbnail_height;
+    $crop_thumbnail['thumb-w'] = $thumbnail_properties['thumbnail_width'];
+    $crop_thumbnail['thumb-h'] = $thumbnail_properties['thumbnail_height'];
     $crop_thumbnail['x'] = round($original_crop['anchor']['x'] / $delta);
     $crop_thumbnail['y'] = round($original_crop['anchor']['y'] / $delta);
 
