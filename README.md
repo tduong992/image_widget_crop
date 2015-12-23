@@ -8,7 +8,7 @@ ImageWidgetCrop module
 Provides an interface for using the features of the [Crop API]. Module is still 
 under heavy development.
 
-[Crop API]: https://github.com/drupal-media/cro
+[Crop API]: https://github.com/drupal-media/crop
 
 Development 
 -----------
