@@ -15,7 +15,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Image\Image;
 use Drupal\Core\Render\ElementInfoManagerInterface;
 use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
-use Drupal\image_widget_crop\ImageWidgetCrop;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use Drupal\image_widget_crop\ImageWidgetCropManager;
@@ -161,8 +160,9 @@ class ImageCropWidget extends ImageWidget {
       // Verify if user have uploaded an image.
       self::getFileImageVariables($element, $variables);
 
-      // @TODO: $element['#delta'] is not unique. We need to find something unique.
-      $list_id = 'crop_list_' . $element['#field_name'] . '_' . $element['#delta'];
+      // Ensure that the ID of an element is unique.
+      $list_id = \Drupal::service('uuid')->generate();
+
       // Standardize the name of wrapper elements.
       $element_wrapper_name = 'crop_container';
 
