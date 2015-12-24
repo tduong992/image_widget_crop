@@ -412,7 +412,7 @@ class ImageCropWidget extends ImageWidget {
    */
   public static function getCropFormPropertyValue(array &$element, $crop_type, $edit, $value, $property) {
     // Standard case.
-    if (!empty($edit) && !empty($value)) {
+    if (!empty($edit) && isset($value)) {
       return $value;
     }
 
