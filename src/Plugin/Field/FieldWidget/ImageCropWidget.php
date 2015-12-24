@@ -14,6 +14,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Image\Image;
 use Drupal\Core\Render\ElementInfoManagerInterface;
+use Drupal\crop\Entity\Crop;
 use Drupal\image\Plugin\Field\FieldWidget\ImageWidget;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
@@ -255,11 +256,14 @@ class ImageCropWidget extends ImageWidget {
             ];
 
             if ($edit && !empty($crop_storage)) {
-              $crops = $crop_storage->loadByProperties(['type' => $crop_type_id, 'uri' => $variables['uri']]);
-              if (!empty($crops)) {
+              // Get Only first crop entity @see https://www.drupal.org/node/2617818.
+              /** @var \Drupal\crop\Entity\Crop $crop */
+              $crop = current($crop_storage->loadByProperties(['type' => $crop_type_id, 'uri' => $variables['uri']]));
+
+              if (!empty($crop)) {
                 // Only if the crop already exist pre-populate,
                 // all cordinates values.
-                $crop_properties = self::getCropProperties($crops);
+                $crop_properties = self::getCropProperties($crop);
 
                 /** @var \Drupal\Core\Image\Image $image */
                 $image = \Drupal::service('image.factory')->get($file->getFileUri());
@@ -314,23 +318,17 @@ class ImageCropWidget extends ImageWidget {
   /**
    * Get All sizes properties of the crops for an file.
    *
-   * @param array $crops
+   * @param \Drupal\crop\Entity\Crop $crop
    *   All crops attached to this file based on URI.
    *
    * @return array<array>
    *   Get all crop zone properties (x, y, height, width),
    */
-  public static function getCropProperties(array $crops) {
-    $crop_properties = [];
-    /** @var \Drupal\crop\Entity\Crop $crop */
-    foreach ($crops as $crop) {
-      $crop_properties = [
-        'anchor' => $crop->anchor(),
-        'size' => $crop->size()
-      ];
-    }
-
-    return $crop_properties;
+  public static function getCropProperties(Crop $crop) {
+    return [
+      'anchor' => $crop->anchor(),
+      'size' => $crop->size()
+    ];
   }
 
   /**
@@ -376,6 +374,7 @@ class ImageCropWidget extends ImageWidget {
    */
   public static function getCropFormElement(array &$element, $element_wrapper_name, array $thumb_properties, $edit, $crop_type_id) {
     $crop_properties = self::getCropFormProperties($thumb_properties, $edit);
+
     // Generate all cordinates elements into the form when,
     // process is active.
     foreach ($crop_properties as $property => $value) {

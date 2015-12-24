@@ -100,8 +100,9 @@ class ImageWidgetCropManager {
     }
 
     foreach ($crops as $crop_element) {
+      // Get Only first crop entity @see https://www.drupal.org/node/2617818.
       /** @var \Drupal\crop\Entity\Crop $crop */
-      $crop = current($crop_element);
+      $crop = $crop_element;
 
       if (!$this->cropHasChanged($crop_properties, array_merge($crop->position(), $crop->size()))) {
         return;
@@ -411,9 +412,11 @@ class ImageWidgetCropManager {
     $crops = [];
     /** @var \Drupal\image\Entity\ImageStyle $image_style */
     foreach ($image_styles as $image_style) {
-      $crop_entities = $this->cropStorage->loadByProperties(['type' => $crop_type->id(), 'uri' => $file_uri]);
-      if (!empty($crop_entities)) {
-        $crops[$image_style->id()] = $crop_entities;
+      // Get Only first crop entity @see https://www.drupal.org/node/2617818.
+      /** @var \Drupal\crop\Entity\Crop $crop */
+      $crop = current($this->cropStorage->loadByProperties(['type' => $crop_type->id(), 'uri' => $file_uri]));
+      if (!empty($crop)) {
+        $crops[$image_style->id()] = $crop;
       }
     }
 
