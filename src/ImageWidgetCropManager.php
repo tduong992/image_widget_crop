@@ -103,7 +103,7 @@ class ImageWidgetCropManager {
       /** @var \Drupal\crop\Entity\Crop $crop */
       $crop = current($crop_element);
 
-      if ($this->cropHasChanged($crop_properties, array_merge($crop->position(), $crop->size()))) {
+      if (!$this->cropHasChanged($crop_properties, array_merge($crop->position(), $crop->size()))) {
         return;
       }
 
@@ -430,10 +430,10 @@ class ImageWidgetCropManager {
    *   Only if this crop already exist.
    *
    * @return bool
-   *   True if properties not match.
+   *   Return true if properties is not identical.
    */
   public function cropHasChanged(array $crop_properties, array $old_crop) {
-    return (($crop_properties['x'] == $old_crop['x'] && $crop_properties['width'] == $old_crop['width']) && ($crop_properties['y'] == $old_crop['y'] && $crop_properties['height'] == $old_crop['height']));
+    return !empty(array_diff_assoc($crop_properties, $old_crop)) ? TRUE : FALSE;
   }
 
 }
